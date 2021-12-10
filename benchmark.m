@@ -12,7 +12,7 @@ copyfile('benchmark\COPCAT_input_benchmark_pile_resp.xlsm', 'excel\COPCAT_input.
 Inverse_Model % run Inverse model
 copyfile('excel\temp\COPCAT_input.xlsm', 'excel','f')
 
-
+%% test 2
 %% Pile response benchmarking
 path_benchmark_ref  = 'benchmark\';                         % path for the reference datasets
 path_benchmark_new  = 'output\benchmark\data\pile_response\';             % path for the newly ran datasets
