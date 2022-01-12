@@ -9,6 +9,8 @@ trigger:
 pool:
   vmImage: ubuntu-latest
 
+name: '$(majorVersion).$(minorVersion)$(Rev:.r)'
+
 steps:
 - task: PublishPipelineArtifact@1
   inputs:
