@@ -2,6 +2,9 @@
 % description of the function is found in the Function manual
 clc; clear all; close all; delete(gcp('nocreate'))
 
+%%Version number is automatically updated by release pipeline
+CopcatVersion           = 'DevelopmentVersion'
+
 %% Input
 addpath (genpath('library'));                                               % make sure all the functions are available
 addpath (genpath('excel'));                                                 % make sure all the excel input is available
