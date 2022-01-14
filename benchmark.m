@@ -3,20 +3,28 @@
 clc; close all; clear all;
 cprintf('black','Benchmarking initiated \n');
 cprintf('black','---------------------------------------------------------------------- \n');
+
 %% Run Inverse model of new version
 % system('taskkill /F /IM EXCEL.EXE');
 copyfile('excel\COPCAT_input.xlsm', 'excel\temp','f') % move COPCAT input to a temporary folder
-copyfile('benchmark\COPCAT_input_benchmark_reac_curv.xlsm', 'excel\COPCAT_input.xlsm','f')
+% Unit test 1 - reaction curve creator
+copyfile('benchmark\COPCAT_input_benchmark_reac_curv.xlsm', 'excel\COPCAT_input.xlsm','f') % replace normal input by benchmarking input
 Inverse_Model % run Inverse model
-copyfile('benchmark\COPCAT_input_benchmark_pile_resp.xlsm', 'excel\COPCAT_input.xlsm','f')
+% Unit test 2 - pile response output
+copyfile('benchmark\COPCAT_input_benchmark_pile_resp.xlsm', 'excel\COPCAT_input.xlsm','f') % replace normal input by benchmarking input
 Inverse_Model % run Inverse model
-copyfile('excel\temp\COPCAT_input.xlsm', 'excel','f')
+% Unit test 3 - reaction curve calibration
+copyfile('benchmark\COPCAT_input_benchmark_reac_curv_cal.xlsm', 'excel\COPCAT_input.xlsm','f') % replace normal input by benchmarking input
+Inverse_Model % run Inverse model
+% Unit test 4 - pile response calibration
+copyfile('benchmark\COPCAT_input_benchmark_pile_resp_cal.xlsm', 'excel\COPCAT_input.xlsm','f') % replace normal input by benchmarking input
+Inverse_Model % run Inverse model
+copyfile('excel\temp\COPCAT_input.xlsm', 'excel','f') % copy original input file back to the main reading folder
 
-%% test 2
 %% Pile response benchmarking
 path_benchmark_ref  = 'benchmark\';                         % path for the reference datasets
 path_benchmark_new  = 'output\benchmark\data\pile_response\';             % path for the newly ran datasets
-files = {'deflection_along_pile_D_10','deflection_along_pile_D_200','moment_D_10','moment_D_200','shear_D_10','shear_D_200','load_applied_at_mudline_D_10','displacement_at_mudline_D_10','load_applied_at_mudline_D_200','displacement_at_mudline_D_200'}; % list fo files used for comparison
+files = {'deflection_along_pile_D_10','deflection_along_pile_D_200','moment_D_10','moment_D_200','shear_D_10','shear_D_200','load_applied_at_mudline_D_10','displacement_at_mudline_D_10','load_applied_at_mudline_D_200','displacement_at_mudline_D_200','pile_response_calibrated_variables'}; % list fo files used for comparison
 for i = 1:size(files,2)
     %% Read benchmark model and new model
     file_name_ref   = [path_benchmark_ref,files{i},'.txt']; % total path for reference dataset
@@ -48,7 +56,7 @@ cprintf('black','---------------------------------------------------------------
 
 
 %% Reaction curve benchmarking
-files = {'p','p_toe','m','m_toe','y','y_toe','teta','teta_toe'}; % list fo files used for comparison
+files = {'p','p_toe','m','m_toe','y','y_toe','teta','teta_toe','reaction_curve_calibrated_variables'}; % list fo files used for comparison
 path_benchmark_new  = 'output\benchmark\data\reaction_curves\';             % path for the newly ran datasets
 for i = 1:size(files,2)
     %% Read benchmark model and new model
