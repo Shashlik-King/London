@@ -21,6 +21,9 @@ copyfile('benchmark\COPCAT_input_benchmark_pile_resp_cal.xlsm', 'excel\COPCAT_in
 Inverse_Model % run Inverse model
 copyfile('excel\temp\COPCAT_input.xlsm', 'excel','f') % copy original input file back to the main reading folder
 
+%% Settings
+tolerance = 0.000000001;
+
 %% Pile response benchmarking
 path_benchmark_ref  = 'benchmark\';                         % path for the reference datasets
 path_benchmark_new  = 'output\benchmark\data\pile_response\';             % path for the newly ran datasets
@@ -34,6 +37,14 @@ for i = 1:size(files,2)
     
     %% Calculate error
     error.response{i,1}       = (new - reference) ./ reference; % calculate error for each discretised element/value
+    % tolerance implementation
+    for j = 1:size(error.response{i,1},1)
+        for k = 1:size(error.response{i,1},2)
+            if abs(error.response{i,1}(j,k)) <= abs(reference(j,k)*tolerance)
+                error.response{i,1}(j,k) = 0;
+            end
+        end
+    end
     error.response{i,1}(isnan(error.response{i,1}))=0;
     total_error.response{i,1} = sum(sum(error.response{i,1}));  % calculate total error for file analysed
     cprintf('black',['Total error results for ',files{i}, ' are:']);
@@ -67,6 +78,14 @@ for i = 1:size(files,2)
     
     %% Calculate error
     error.reaction{i,1}       = (new - reference) ./ reference; % calculate error for each discretised element/value
+    % tolerance implementation
+    for j = 1:size(error.reaction{i,1},1)
+        for k = 1:size(error.reaction{i,1},2)
+            if abs(error.reaction{i,1}(j,k)) <= abs(reference(j,k)*tolerance)
+                error.reaction{i,1}(j,k) = 0;
+            end
+        end
+    end
     error.reaction{i,1}(isnan(error.reaction{i,1}))=0;
     total_error.reaction{i,1} = sum(sum(error.reaction{i,1})); % calculate total error for file analysed
     cprintf('black',['Total error results for ',files{i}, ' are:']);
