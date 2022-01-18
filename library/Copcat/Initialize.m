@@ -65,58 +65,26 @@ for i = 1:size(Range,1)
 end
 
 %% Cut away unnecessary parts at the end
-% row_has_empty = any(cellfun(@isempty, Input.Layered_Data), 2);  %find them
-Ref                     = Input.Starting_Value(:,1);
-Ref                     = Ref(~cellfun('isempty',Ref));
-ref_len                 = size(Ref,1);
-Ref                     = Input.Starting_Value(1,:);
-Ref                     = Ref(~cellfun('isempty',Ref));
-ref_wid                 = size(Ref,2);
-Ref2                     = Input.Constant_value(1,:);
-Ref2                     = Ref2(~cellfun('isempty',Ref2));
-ref_wid2                 = size(Ref2,2);
-Input.LB                =  Input.LB(:,1:ref_wid);
-Input.UB                =  Input.UB(:,1:ref_wid);
-Input.Starting_Value    =  Input.Starting_Value(:,1:ref_wid);
-Input.Constant_value    =  Input.Constant_value(:,2:ref_wid2);
-% Input.Function_Type     =  Input.Function_Type(:,:);
+on_layers_rows          = ~any(cellfun(@isempty, Input.Layered_Data), 2);  %find them
+on_layers_cols          = ~any(cellfun(@isempty, Input.Starting_Value(on_layers_rows,:)), 1);  %find them
+Input.Starting_Value    = Input.Starting_Value(on_layers_rows,on_layers_cols);
+Input.Layered_Data      = Input.Layered_Data(on_layers_rows,:);
+Input.LB                = Input.LB(on_layers_rows,on_layers_cols);
+Input.UB                = Input.UB(on_layers_rows,on_layers_cols);
+Input.Function_Type     = Input.Function_Type(on_layers_rows,:);   %delete them
 
-% row_has_empty = any(cellfun(@isempty, Input.Layered_Data), 2);  %find them
-% Input.Layered_Data(row_has_empty,:) = [];   %delete them
-% Input.Layered_Data      = Input.Layered_Data(1:ref_len,:);
-% Input.LB(row_has_empty,:) = [];   %delete them
-% Input.UB(row_has_empty,:) = [];   %delete them
-% Input.Starting_Value(row_has_empty,:) = [];   %delete them
-% Input.Constant_value(row_has_empty,:) = [];   %delete them
-% Input.Function_Type(row_has_empty,:) = [];   %delete them
+on_layers_cols_con      = ~any(cellfun(@isempty, Input.Constant_value(on_layers_rows,:)), 1);  %find them
+Input.Constant_value    =  Input.Constant_value(on_layers_rows,on_layers_cols_con);
 
-row_has_empty = any(cellfun(@isempty, Input.Layered_Data), 2);  %find them
-Input.Layered_Data(row_has_empty,:) = [];   %delete them
-
-row_has_empty = any(cellfun(@isempty, Input.LB), 2);  %find them
-Input.LB(row_has_empty,:) = [];   %delete them
-
-row_has_empty = any(cellfun(@isempty, Input.UB), 2);  %find them
-Input.UB(row_has_empty,:) = [];   %delete them
-
-row_has_empty = any(cellfun(@isempty, Input.Starting_Value), 2);  %find them
-Input.Starting_Value(row_has_empty,:) = [];   %delete them
-
-row_has_empty = any(cellfun(@isempty, Input.Constant_value), 2);  %find them
-Input.Constant_value(row_has_empty,:) = [];   %delete them
-
-row_has_empty = any(cellfun(@isempty, Input.Function_Type), 2);  %find them
-Input.Function_Type(row_has_empty,:) = [];   %delete them
 %% Reassignment of parameters
 
 Input.objective_layer    = cell2mat(Input.Layered_Data(:,5));
 Input.BaseSoil           = Input.Layered_Data(:,1);
 Input.SoilInfo           = Input.Layered_Data(:,2:end-1);
-Input.CalibParam         = Input.CalibParam(1,1:ref_wid);
+Input.CalibParam         = Input.CalibParam(1,on_layers_cols);
 Input.Function_Type_Name = Input.Function_Type_Name;
 Input.Function_Type      = Input.Function_Type;
-Input.Constant_name      = Input.Constant_name(1,2:ref_wid2);
-% Input.Constant_value     = Input.Constant_value(:,2:end);
+Input.Constant_name      = Input.Constant_name(1,on_layers_cols_con);
 
 if strcmp(Input.Stratigraphy{1,2}, 'homogeneous')    % When the soil is homogious, but various layeres has been defined in cospin input 
     Input.Starting_Value = Input.Starting_Value(1,:); 
