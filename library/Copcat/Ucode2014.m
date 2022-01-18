@@ -17,7 +17,7 @@ if Inversemode
             UB_single=UB(layer,:);
             object_layers_single=object_layers(layer);
             disp(['Calibration of layer',num2str(object_layers_single)])
-           [Variable_single,RESNORM,RESIDUAL,EXITFLAG,output] = lsqnonlin(@(Variable_single)BatchRun(Variable_single,loadcase,object_layers_single,PYcreator,CallModels,Weight,PLAX,calibration,scour,soil,pile,loads,settings,0,PYcreator_stiff,var_name,focus,constant,con_name,spring_type,Stratigraphy,Database,Apply_Direct_springs,0),start_single,LB_single,UB_single,option);      
+           [Variable_single,RESNORM,RESIDUAL,EXITFLAG,output] = lsqnonlin(@(Variable_single)BatchRun(Variable_single,loadcase,object_layers_single,PYcreator,CallModels,Weight,PLAX,calibration,scour,soil,pile,loads,settings,0,PYcreator_stiff,var_name,focus,constant,con_name,spring_type,Stratigraphy,Database,Apply_Direct_springs,0,Input),start_single,LB_single,UB_single,option);      
            variable(layer,:)=Variable_single;
            fprintf(fid,'%g\t',variable(layer,:));
            fprintf(fid,'\n'); 
