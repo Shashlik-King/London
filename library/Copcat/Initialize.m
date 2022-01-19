@@ -1,4 +1,4 @@
-function [Input] = Initialize()
+function [Input, Database] = Initialize()
 % Loads settings and starting values, LB, UB values as well as constants necessary for calibration and plotting
 
 %% Sheet and excel definition
@@ -17,7 +17,7 @@ Range = {'Calibration' 'B3:C3'
 'LoadLevels' 'B18:C18'
 'Springtype' 'B19:C19'
 'Stratigraphy' 'B20:C20'
-'SoilType' 'B21:C21'
+% 'SoilType' 'B21:C21'
 'MomentWeight' 'B42:C42'
 'DispWeight' 'B43:C43'
 'Loaddisp' 'B44:C44'
@@ -103,6 +103,16 @@ Input.DispFocus          = split(Input.DispFocus{1,2},"&")';
 Input.Load_Disp_Focus    = split(Input.Load_Disp_Focus{1,2},"&")';
 Input.Load_Level_Focus   = split(Input.Load_Level_Focus{1,2},"&")';
 Input.Model_Focus        = split(Input.Model_Focus{1,2},"&")';
+
+%% Import DB from excel
+[Database.num,Database.txt,Database.raw] = xlsread('COPCAT_Input.xlsm','Table Output','A1:BQ100000'); % reads COPCAT database with PISA parameters
+Database.txt                             = Database.txt(2:end,:);           % filters the text part of the database only
+
+
+for ii = 1:size(Input.objective_layer,1)
+    index = find(strcmp(Input.BaseSoil{ii}, Database.txt(:,1)));
+    Input.SoilType(ii,1) = Database.txt(index,5);
+end
 
 end 
 

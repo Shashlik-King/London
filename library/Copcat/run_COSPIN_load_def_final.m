@@ -1,4 +1,4 @@
-function [results,DB_output,output_COPCAT] = run_COSPIN_load_def_final(Location,weight,PLAX,PYcreator,variable,loadcase,object_layers,scour,soil,pile,loads,settings,PYcreator_stiff,NStepMultiplier,var_name,constant,con_name,Database,Apply_Direct_springs,txt_file_output) %PNGI
+function [results,DB_output,output_COPCAT] = run_COSPIN_load_def_final(Location,weight,PLAX,PYcreator,variable,loadcase,object_layers,scour,soil,pile,loads,settings,PYcreator_stiff,NStepMultiplier,var_name,constant,con_name,Database,Apply_Direct_springs,txt_file_output,output_COPCAT) %PNGI
 addpath (genpath('library')); % make sure all the functions are available
 %% For All Locations
 ID = Location;			 

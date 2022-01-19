@@ -17,6 +17,7 @@ for Geo = 1:size(CallModels,2)    % Run over the number of plaxis model
                 results.shear           = 0;
                 results.moment          = 0;
                 results.displacement    = 0;
+                output_COPCAT           = [];
             end
             if contains(calibration.involvment,'defmud')
                 switch calibration.level{level}
@@ -26,7 +27,7 @@ for Geo = 1:size(CallModels,2)    % Run over the number of plaxis model
                         NStepMultiplier = 25;
                 end
                 Nrun_forward= Nrun_forward+1;
-                [load_dips_curve,DB_output,output_COPCAT.(calibration.level{level}).load_def] = run_COSPIN_load_def_final(CallModels{Geo},Weight,PLAX.(CallModels{Geo}).(calibration.level{level}),PYcreator,variable,loadcase.(CallModels{Geo}).(calibration.level{level}),object_layers,scour.(CallModels{Geo}), soil.(CallModels{Geo}), pile.(CallModels{Geo}), loads.(CallModels{Geo}), settings.(CallModels{Geo}),PYcreator_stiff,NStepMultiplier,var_name,constant,con_name,Database,Apply_Direct_springs,txt_file_output);
+                [load_dips_curve,DB_output,output_COPCAT.(calibration.level{level}).load_def] = run_COSPIN_load_def_final(CallModels{Geo},Weight,PLAX.(CallModels{Geo}).(calibration.level{level}),PYcreator,variable,loadcase.(CallModels{Geo}).(calibration.level{level}),object_layers,scour.(CallModels{Geo}), soil.(CallModels{Geo}), pile.(CallModels{Geo}), loads.(CallModels{Geo}), settings.(CallModels{Geo}),PYcreator_stiff,NStepMultiplier,var_name,constant,con_name,Database,Apply_Direct_springs,txt_file_output,output_COPCAT);
             else
                 load_dips_curve.load_displacement = 0;
             end
@@ -38,6 +39,14 @@ for Geo = 1:size(CallModels,2)    % Run over the number of plaxis model
     end
 end
 
+if  PYcreator == 0
+    General_error = Assemble_Error(NumberofGeometry,calibration,model);
+elseif PYcreator == 1
+    General_error = Residual;
+end
+
+%% POSTPROCESSING
+%Plotting
 if PlotSwitch && PYcreator == 0
     plot_results(calibration,model,CallModels); 
 elseif PlotSwitch && PYcreator==1
@@ -45,15 +54,25 @@ elseif PlotSwitch && PYcreator==1
     plot_P_Y_CURVES(calibration,Global_Data,CallModels,object_layers,spring_type);  
 end
 
-DB_write(DB_output,Input,output_COPCAT,calibration.level{level});
-
-if  PYcreator == 0
-    General_error = Assemble_Error(NumberofGeometry,calibration,model);
-elseif PYcreator == 1
-    General_error = Residual;
+% MySQL DB Output
+if PlotSwitch && Input.Database_update{1,2}
+    DB_write(DB_output,Input,spring_type);
+else
+    disp('No update of the Database chosen.')
 end
 
-%% Text Output
-txt_file_output_fun(CallModels,Geo,output_COPCAT,calibration,txt_file_output,PYcreator)
+% Text Output
+if PlotSwitch && txt_file_output
+    txt_file_output_fun(CallModels,Geo,output_COPCAT,calibration,txt_file_output,PYcreator)
+else
+    disp('No update of the Database chosen.')
+end
+
+% Log files
+if PlotSwitch && txt_file_output
+    txt_file_output_fun(CallModels,Geo,output_COPCAT,calibration,txt_file_output,PYcreator)
+else
+    disp('No update of the Database chosen.')
+end
 
 end
