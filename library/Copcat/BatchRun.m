@@ -59,7 +59,7 @@ if txt_file_output
     if exist(OutputFolder,'dir') == 0
         mkdir(OutputFolder);                          % Folder path for saving plots 
     end
-    if PYcreator % Write all springs to the text files
+    if PYcreator && Input.Calibration{1,2} == 0% Write all springs to the text files
         
         OutputFolder = ['output\',CallModels{Geo},'\data\reaction_curves'];   % Folder path name only
         if exist(OutputFolder,'dir') == 0
@@ -74,7 +74,7 @@ if txt_file_output
         writematrix(output_COPCAT.y_toe.bottom,['output\',CallModels{Geo},'\data\reaction_curves\','y_toe.txt'],'Delimiter','tab')
         writematrix(output_COPCAT.m_toe.bottom,['output\',CallModels{Geo},'\data\reaction_curves\','m_toe.txt'],'Delimiter','tab')
         writematrix(output_COPCAT.teta_toe.bottom,['output\',CallModels{Geo},'\data\reaction_curves\','teta_toe.txt'],'Delimiter','tab')
-    else % write all pile response output to a text file
+    elseif PYcreator == 0 && Input.Calibration{1,2} == 0% write all pile response output to a text file
         
         OutputFolder = ['output\',CallModels{Geo},'\data\pile_response'];   % Folder path name only
         if exist(OutputFolder,'dir') == 0
