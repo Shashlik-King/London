@@ -9,7 +9,7 @@ CopcatVersion           = 'DevelopmentVersion'
 addpath (genpath('library'));                                               % make sure all the functions are available
 addpath (genpath('excel'));                                                 % make sure all the excel input is available
 [Input]                                  = Initialize();                    % reads all input from excel user interface
-[Database.num,Database.txt,Database.raw] = xlsread('COPCAT_Input.xlsm','Table Output','A1:BQ100000'); % reads COPCAT database with PISA parameters
+[Database.num,Database.txt,Database.raw] = xlsread('COPCAT_Input.xlsm','Table Output','A1:BT100'); % reads COPCAT database with PISA parameters
 Database.txt                             = Database.txt(2:end,:);           % filters the text part of the database only
 scour_Depth 							 = 0; 								% sets scour to 0
 		

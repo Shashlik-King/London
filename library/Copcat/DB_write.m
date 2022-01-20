@@ -28,7 +28,7 @@ if Input.Database_update{1,2}
     New.revision = Input.revision{1,2};
     disp('Writing parameters into Database starting. Please wait.')
     for i = 1:size(unique(output_COPCAT.(load_level).output.element.soil_layer),1)
-        New.name{i} = Input.Layered_Data{i,4}; % specifies the soil layer name
+        New.name{i} = Input.Layered_Data{i,5}; % specifies the soil layer name
         New.project{i} = Input.Project_name{1,2}; % specifies the project name
         if Input.PYCreator{1,2}==1 && Input.SpringType == 0
             New.notes{i} = 'Reaction curves - p-y'; % specifies calibration type used
