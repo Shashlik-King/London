@@ -5,10 +5,15 @@ clc; clear all; close all; delete(gcp('nocreate'))
 %% Input
 addpath (genpath('library'));                                               % make sure all the functions are available
 addpath (genpath('excel'));                                                 % make sure all the excel input is available
+<<<<<<< HEAD
 [Input]                                  = Initialize();                    % reads all input from excel user interface
 [Database.num,Database.txt,Database.raw] = xlsread('COPCAT_Input.xlsm','Table Output','A1:BT100'); % reads COPCAT database with PISA parameters
 Database.txt                             = Database.txt(2:end,:);           % filters the text part of the database only
 scour_Depth 							 = 0; 								% sets scour to 0
+=======
+[Input, Database]        = Initialize();                                    % reads all input from excel user interface
+scour_Depth 			 = 0;                                               % sets scour to 0
+>>>>>>> e03daa7744717b164f84e18344d4da0d76ac9181
 		
 Layered_wise_calibration = cell2mat(Input.Layered_wise_calibration(1,2));   % Assign switch - layered calibration 1 = on, 0 = off
 Inversemode              = cell2mat(Input.Calibration(1,2));                % Assign switch - run calibration 1 = on, 0 = off

@@ -1,4 +1,4 @@
-function DB_write(DB_output,Input,output_COPCAT,load_level)
+function DB_write(DB_output,Input,spring_type)
 % Read and write excel database
 
 %% MySQL dDatabase settings
@@ -21,28 +21,26 @@ mysqlstr_ini        = ['INSERT INTO ',table,' (name,project,rev,notes,soil_type,
     
 %% New data assignment
 
-if Input.Database_update{1,2}
     mysql('open',settings.db_server,settings.db_user,settings.db_pass); % ('open','server','username','password')
     mysql(['use ',settings.db_name]); % name of database
 
     New.revision = Input.revision{1,2};
     disp('Writing parameters into Database starting. Please wait.')
-    for i = 1:size(unique(output_COPCAT.(load_level).output.element.soil_layer),1)
+    for i = 1:size(Input.Layered_Data,2)
         New.name{i} = Input.Layered_Data{i,5}; % specifies the soil layer name
         New.project{i} = Input.Project_name{1,2}; % specifies the project name
-        if Input.PYCreator{1,2}==1 && Input.SpringType == 0
+        if Input.PYCreator{1,2}==1 && spring_type == 0
             New.notes{i} = 'Reaction curves - p-y'; % specifies calibration type used
-        elseif Input.PYCreator{1,2}==1 && Input.SpringType == 1
+        elseif Input.PYCreator{1,2}==1 && spring_type == 1
             New.notes{i} = 'Reaction curves - m-t'; % specifies calibration type used
-        elseif Input.PYCreator{1,2}==1 && Input.SpringType == 2
+        elseif Input.PYCreator{1,2}==1 && spring_type == 2
             New.notes{i} = 'Reaction curves - H-b'; % specifies calibration type used
-        elseif Input.PYCreator{1,2}==1 && Input.SpringType == 3
+        elseif Input.PYCreator{1,2}==1 && spring_type == 3
             New.notes{i} = 'Reaction curves - M-b'; % specifies calibration type used
         elseif Input.PYCreator{1,2}==0
             New.notes{i} = 'Pile_response'; % specifies calibration type used
         end
-        index_param = find(output_COPCAT.(load_level).output.element.soil_layer == i);
-        New.soil_type{i} = output_COPCAT.(load_level).output.element.type{index_param(1,1),1} ;
+        New.soil_type{i} = Input.SoilType{i,1};
         database_str = [mysqlstr_ini,'''',New.name{i},''',''',New.project{i},''',''',num2str(New.revision),''',''',New.notes{i},''',''',New.soil_type{i},''''];
         for ii = 1:size(DB_output(i,:),2)
             database_str = [database_str,',',num2str(DB_output(i,ii))]; % Initialisation fo the string to be sent to the MySQL Database
@@ -53,9 +51,7 @@ if Input.Database_update{1,2}
     disp('Writing into Database finished.')
     mysql('close')
     disp('Finished exporting py-curves')
-else
-    disp('No update of the Database chosen.')
-end  
+ 
 disp('---------------------------------------------------------------------')
 
 %% Constitutive model Database
