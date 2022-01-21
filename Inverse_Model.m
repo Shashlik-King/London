@@ -2,9 +2,6 @@
 % description of the function is found in the Function manual
 clc; clear all; close all; delete(gcp('nocreate'))
 
-%%Version number is automatically updated by release pipeline
-CopcatVersion           = 'DevelopmentVersion'
-
 %% Input
 addpath (genpath('library'));                                               % make sure all the functions are available
 addpath (genpath('excel'));                                                 % make sure all the excel input is available
@@ -103,3 +100,13 @@ UB = cell2mat(UB);
 %% Calculations
 [variable]      = Ucode2014(Inversemode,loadcase,object_layers,PYcreator,CallModels,Weight,PLAX,calibration,scour,soil,pile,loads,settings,PYcreator_stiff,var_name,focus,constant,con_name,spring_type,Stratigraphy,Database,start,LB,UB,Layered_wise_calibration,Apply_Direct_springs,Input);
 General_error   = BatchRun(variable,loadcase,object_layers,PYcreator,CallModels,Weight,PLAX,calibration,scour,soil,pile,loads,settings,1,PYcreator_stiff,var_name,focus,constant,con_name,spring_type,Stratigraphy,Database,Apply_Direct_springs,txt_file_output,Input);
+
+if txt_file_output 
+    if PYcreator == 1 && Input.Calibration{1,2} == 1% write all pile response output to a text file
+        disp('calibration reaction curve benchmark')
+        writematrix(variable,['output\',CallModels{Geo},'\data\reaction_curves\reaction_curve_calibrated_variables.txt'],'Delimiter','tab')
+    elseif PYcreator == 0 && Input.Calibration{1,2} == 1% write all pile response output to a text file
+        disp('calibration pile response benchmark')
+        writematrix(variable,['output\',CallModels{Geo},'\data\pile_response\pile_response_calibrated_variables.txt'],'Delimiter','tab')
+    end
+end
