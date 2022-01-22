@@ -1,4 +1,4 @@
-function [Input] = Initialize()
+function [Input, Database] = Initialize()
 % Loads settings and starting values, LB, UB values as well as constants necessary for calibration and plotting
 
 %% Sheet and excel definition
@@ -17,7 +17,7 @@ Range = {'Calibration' 'B3:C3'
 'LoadLevels' 'B18:C18'
 'Springtype' 'B19:C19'
 'Stratigraphy' 'B20:C20'
-'SoilType' 'B21:C21'
+% 'SoilType' 'B21:C21'
 'MomentWeight' 'B42:C42'
 'DispWeight' 'B43:C43'
 'Loaddisp' 'B44:C44'
@@ -65,58 +65,26 @@ for i = 1:size(Range,1)
 end
 
 %% Cut away unnecessary parts at the end
-% row_has_empty = any(cellfun(@isempty, Input.Layered_Data), 2);  %find them
-Ref                     = Input.Starting_Value(:,1);
-Ref                     = Ref(~cellfun('isempty',Ref));
-ref_len                 = size(Ref,1);
-Ref                     = Input.Starting_Value(1,:);
-Ref                     = Ref(~cellfun('isempty',Ref));
-ref_wid                 = size(Ref,2);
-Ref2                     = Input.Constant_value(1,:);
-Ref2                     = Ref2(~cellfun('isempty',Ref2));
-ref_wid2                 = size(Ref2,2);
-Input.LB                =  Input.LB(:,1:ref_wid);
-Input.UB                =  Input.UB(:,1:ref_wid);
-Input.Starting_Value    =  Input.Starting_Value(:,1:ref_wid);
-Input.Constant_value    =  Input.Constant_value(:,2:ref_wid2);
-% Input.Function_Type     =  Input.Function_Type(:,:);
+on_layers_rows          = ~any(cellfun(@isempty, Input.Layered_Data), 2);  %find them
+on_layers_cols          = ~any(cellfun(@isempty, Input.Starting_Value(on_layers_rows,:)), 1);  %find them
+Input.Starting_Value    = Input.Starting_Value(on_layers_rows,on_layers_cols);
+Input.Layered_Data      = Input.Layered_Data(on_layers_rows,:);
+Input.LB                = Input.LB(on_layers_rows,on_layers_cols);
+Input.UB                = Input.UB(on_layers_rows,on_layers_cols);
+Input.Function_Type     = Input.Function_Type(on_layers_rows,:);   %delete them
 
-% row_has_empty = any(cellfun(@isempty, Input.Layered_Data), 2);  %find them
-% Input.Layered_Data(row_has_empty,:) = [];   %delete them
-% Input.Layered_Data      = Input.Layered_Data(1:ref_len,:);
-% Input.LB(row_has_empty,:) = [];   %delete them
-% Input.UB(row_has_empty,:) = [];   %delete them
-% Input.Starting_Value(row_has_empty,:) = [];   %delete them
-% Input.Constant_value(row_has_empty,:) = [];   %delete them
-% Input.Function_Type(row_has_empty,:) = [];   %delete them
+on_layers_cols_con      = ~any(cellfun(@isempty, Input.Constant_value(on_layers_rows,:)), 1);  %find them
+Input.Constant_value    =  Input.Constant_value(on_layers_rows,on_layers_cols_con);
 
-row_has_empty = any(cellfun(@isempty, Input.Layered_Data), 2);  %find them
-Input.Layered_Data(row_has_empty,:) = [];   %delete them
-
-row_has_empty = any(cellfun(@isempty, Input.LB), 2);  %find them
-Input.LB(row_has_empty,:) = [];   %delete them
-
-row_has_empty = any(cellfun(@isempty, Input.UB), 2);  %find them
-Input.UB(row_has_empty,:) = [];   %delete them
-
-row_has_empty = any(cellfun(@isempty, Input.Starting_Value), 2);  %find them
-Input.Starting_Value(row_has_empty,:) = [];   %delete them
-
-row_has_empty = any(cellfun(@isempty, Input.Constant_value), 2);  %find them
-Input.Constant_value(row_has_empty,:) = [];   %delete them
-
-row_has_empty = any(cellfun(@isempty, Input.Function_Type), 2);  %find them
-Input.Function_Type(row_has_empty,:) = [];   %delete them
 %% Reassignment of parameters
 
 Input.objective_layer    = cell2mat(Input.Layered_Data(:,5));
 Input.BaseSoil           = Input.Layered_Data(:,1);
 Input.SoilInfo           = Input.Layered_Data(:,2:end-1);
-Input.CalibParam         = Input.CalibParam(1,1:ref_wid);
+Input.CalibParam         = Input.CalibParam(1,on_layers_cols);
 Input.Function_Type_Name = Input.Function_Type_Name;
 Input.Function_Type      = Input.Function_Type;
-Input.Constant_name      = Input.Constant_name(1,2:ref_wid2);
-% Input.Constant_value     = Input.Constant_value(:,2:end);
+Input.Constant_name      = Input.Constant_name(1,on_layers_cols_con);
 
 if strcmp(Input.Stratigraphy{1,2}, 'homogeneous')    % When the soil is homogious, but various layeres has been defined in cospin input 
     Input.Starting_Value = Input.Starting_Value(1,:); 
@@ -135,6 +103,16 @@ Input.DispFocus          = split(Input.DispFocus{1,2},"&")';
 Input.Load_Disp_Focus    = split(Input.Load_Disp_Focus{1,2},"&")';
 Input.Load_Level_Focus   = split(Input.Load_Level_Focus{1,2},"&")';
 Input.Model_Focus        = split(Input.Model_Focus{1,2},"&")';
+
+%% Import DB from excel
+[Database.num,Database.txt,Database.raw] = xlsread('COPCAT_Input.xlsm','Table Output','A1:BQ100000'); % reads COPCAT database with PISA parameters
+Database.txt                             = Database.txt(2:end,:);           % filters the text part of the database only
+
+
+for ii = 1:size(Input.objective_layer,1)
+    index = find(strcmp(Input.BaseSoil{ii}, Database.txt(:,1)));
+    Input.SoilType(ii,1) = Database.txt(index,5);
+end
 
 end 
 
