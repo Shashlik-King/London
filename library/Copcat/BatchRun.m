@@ -65,14 +65,14 @@ end
 if PlotSwitch && txt_file_output
     txt_file_output_fun(CallModels,Geo,output_COPCAT,calibration,txt_file_output,PYcreator)
 else
-    disp('No update of the Database chosen.')
+    disp('No .txt output chosen.')
 end
 
 % Log files
 if PlotSwitch && txt_file_output
     txt_file_output_fun(CallModels,Geo,output_COPCAT,calibration,txt_file_output,PYcreator)
 else
-    disp('No update of the Database chosen.')
+    disp('No log files chosen.')
 end
 
 end
