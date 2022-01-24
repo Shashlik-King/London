@@ -27,7 +27,7 @@ mysqlstr_ini        = ['INSERT INTO ',table,' (name,project,rev,notes,soil_type,
     New.revision = Input.revision{1,2};
     disp('Writing parameters into Database starting. Please wait.')
     for i = 1:size(Input.Layered_Data,2)
-        New.name{i} = Input.Layered_Data{i,4}; % specifies the soil layer name
+        New.name{i} = Input.Layered_Data{i,5}; % specifies the soil layer name
         New.project{i} = Input.Project_name{1,2}; % specifies the project name
         if Input.PYCreator{1,2}==1 && spring_type == 0
             New.notes{i} = 'Reaction curves - p-y'; % specifies calibration type used
