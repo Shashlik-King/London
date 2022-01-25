@@ -48,6 +48,14 @@ Range = {'Calibration' 'B3:C3'
 'Function_Type' 'W5:AL34'
 'Constant_name' 'AN4:AW4'
 'Constant_value' 'AN5:AW34'
+'Cyclic_run' 'B46:C46'
+'Markov_run' 'B47:C47'
+'Markov_excel_name' 'B48:C48'
+'Markov_sheet_name' 'B49:C49'
+'Interest_nodes' 'B50:C50'
+'Ns' 'B51:C51'
+'Markov_plot_size' 'B52:C52'
+'Sand_CSR' 'B53:C53'
 };
 
 [~,~,Input_raw] = xlsread(Files{1,1},Sheets{1,1});

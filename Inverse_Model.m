@@ -38,6 +38,10 @@ Stratigraphy             = Input.Stratigraphy{1,2};                         % St
 Apply_Direct_springs     = Input.Direct_Soil_Springs{1,2};                  % Assign switch - use of direct soil springs. See manual for info
 Ommit_Bad_Curves         = Input.Ommit_Bad_Curves{1,2};                     % Assign switch - ommit bad curves for direct soil spring method. See manual for info
 
+% Cyclic concept run
+Cyclic_concept.Main=Input.Cyclic_run{1,2};
+Cyclic_concept.Markov_switch=Input.Markov_run{1,2};
+Cyclic_concept.Sand_CSR=Input.Sand_CSR{1,2};
 %% Parameters Assginment
 
 var_name  = Input.CalibParam;                                                % defines names of variables used for calibration
@@ -76,6 +80,27 @@ for Geo=1:size(CallModels,2)
         loadcase.(CallModels{Geo}).(calibration.level{level}).H 		= 2*PLAX.(CallModels{Geo}).(calibration.level{level}).Plax_V(1,end); 	 							% reads moment force applied to the top of the pile
         loadcase.(CallModels{Geo}).(calibration.level{level}).M 		= -abs(PLAX.(CallModels{Geo}).(calibration.level{level}).Plax_M(4,end)); 							% reads shear force applied to the top of the pile
 
+        if Cyclic_concept.Main
+            Cyclic_concept.excel_name=[pwd,'\Plaxisfiles\',CallModels{Geo},'\',Input.Markov_excel_name{1,2}];
+            Cyclic_concept.sheet_name=Input.Markov_sheet_name{1,2};
+            Cyclic_concept.interest_nodes=Input.Interest_nodes{1,2};
+            if size(Cyclic_concept.interest_nodes,2) == 1
+                disp('Only one node was selected for output')
+            else
+                Cyclic_concept.interest_nodes = split(Cyclic_concept.interest_nodes);
+            end
+            Cyclic_concept.Ns=Input.Ns{1,2};
+            Cyclic_concept.markov_plot_size=Input.Markov_plot_size{1,2};
+            Cyclic_concept.markov_plot_size=split(Cyclic_concept.markov_plot_size);
+            excel_name = Cyclic_concept.excel_name;
+            excel_sheet = Cyclic_concept.sheet_name;
+            Markov.(CallModels{Geo}).num=  readmatrix(excel_name);
+            [Shearmax,MomentMax]=get_the_max_load(Markov.(CallModels{Geo}).num);
+
+            loadcase.(CallModels{Geo}).(calibration.level{level}).H=Shearmax.shear;
+            loadcase.(CallModels{Geo}).(calibration.level{level}).M=Shearmax.moment;
+        end 
+        
         if PYcreator||Apply_Direct_springs
             
             index_rotation=[];
@@ -103,6 +128,11 @@ UB = cell2mat(UB);
 %% Calculations
 [variable]      = Ucode2014(Inversemode,loadcase,object_layers,PYcreator,CallModels,Weight,PLAX,calibration,scour,soil,pile,loads,settings,PYcreator_stiff,var_name,focus,constant,con_name,spring_type,Stratigraphy,Database,start,LB,UB,Layered_wise_calibration,Apply_Direct_springs,Input);
 General_error   = BatchRun(variable,loadcase,object_layers,PYcreator,CallModels,Weight,PLAX,calibration,scour,soil,pile,loads,settings,1,PYcreator_stiff,var_name,focus,constant,con_name,spring_type,Stratigraphy,Database,Apply_Direct_springs,txt_file_output,Input);
+
+if Cyclic_concept.Main
+PlotSwitch=0;   
+[utilisation] = cyclic_degradation_run(variable,loadcase,object_layers,PYcreator,CallModels,Weight,PLAX,calibration,scour,soil,pile,loads,settings,PlotSwitch,PYcreator_stiff,var_name,focus,constant,con_name,spring_type,Stratigraphy,Database,Apply_Direct_springs,Cyclic_concept,Markov);
+end 
 
 if txt_file_output 
     if PYcreator == 1 && Input.Calibration{1,2} == 1% write all pile response output to a text file
