@@ -3,7 +3,7 @@
 clc; clear all; close all; delete(gcp('nocreate'))
 
 %%Version number is automatically updated by release pipeline
-CopcatVersion           = 'DevelopmentVersion'
+CopcatVersion           = 'DevelopmentVersion';
 
 %% Input
 addpath (genpath('library'));                                               % make sure all the functions are available
