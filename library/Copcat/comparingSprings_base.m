@@ -27,7 +27,7 @@ for unit=1:length(object_layers)
             [E50,Eini,Eult]=IsFullymobilized(obserX,obserY);
             Global_Data.(nameOfUnit).Ismobolized(NumTargetUnit,:)= [E50,Eini,Eult];
 
-            [Residual(unit,i),Asso_simul]=errorPYcalcu(obserX,obserY,SimulY,SimulX,Vertical_Stress)
+            [Residual(unit,i),Asso_simul]=errorPYcalcu(obserX,obserY,SimulY,SimulX,Vertical_Stress);
             Error=obserY-Asso_simul;
             index_target_soil=ones(1,size(Error,2));
             index_target_soil(1,:)=closestIndex(i);
