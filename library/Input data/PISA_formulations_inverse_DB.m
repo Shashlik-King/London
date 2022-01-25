@@ -31,7 +31,7 @@ end
 %         Database_raw{Database_index,k} = 0;
 %     end
 % end
-element.type{i,1} = Database.raw{Database_index,5};												   
+element.type{i,1} = Database.raw{Database_index,8};												   
 % Formulations:
 % 0 =Constant       = c1
 % 1 = Linear        = c1 * L/D +c2
@@ -44,7 +44,7 @@ element.type{i,1} = Database.raw{Database_index,5};
 % P-Y curves
 % element.PISA_prelim_param.p_y(i,1)   = Database_raw{Database_index,5}; % Formulation
 % element.PISA_prelim_param.p_y(i,3)   = Database_raw{Database_index,36}
-index_offset = 5;
+index_offset = 8;
 % Normalized ultimate lateral displacement
 element.PISA_prelim_param.p_y(i,1)   = Database_raw{Database_index,1+index_offset};   % Formulation
 element.PISA_prelim_param.p_y(i,2)   = Database_raw{Database_index,2+index_offset};   % Constant 1
