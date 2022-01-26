@@ -33,13 +33,6 @@ for i = 1:NumberofGeometry
             plot(model(i).result(ii).moment(:,2),model(i).result(ii).moment(:,1), '-rx')
             ylabel('Depth [m]')
             xlabel('Moment [kNm]')
-            
-            str_txt=['Produced by COPCAT version', CopcatVersion];
-            Xlim=xlim(gca); x_txt=mean(Xlim);
-            htxt=text(x_txt,0,[str_txt '\newline ']);
-            htxt.HorizontalAlignment='right';
-            htxt.VerticalAlignment='bottom';
-            
             grid on
             legend('COPCAT - 1D', 'PLAXIS - 3D','Location','southeast')
             
@@ -80,7 +73,7 @@ for i = 1:NumberofGeometry
             xlabel('Displacement m')
             legend('COPCAT - 1D', 'PLAXIS - 3D','Location','northeast')
             
-            str_txt=['Produced by COPCAT version', CopcatVersion];
+            str_txt=['Produced by COPCAT version';
             Xlim=xlim(gca); x_txt=mean(Xlim);
             htxt=text(x_txt,0,[str_txt '\newline ']);
             htxt.HorizontalAlignment='right';
