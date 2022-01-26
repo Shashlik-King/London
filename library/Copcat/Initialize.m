@@ -107,13 +107,13 @@ Input.Load_Level_Focus   = split(Input.Load_Level_Focus{1,2},"&")';
 Input.Model_Focus        = split(Input.Model_Focus{1,2},"&")';
 
 %% Import DB from excel
-[Database.num,Database.txt,Database.raw] = xlsread('COPCAT_Input.xlsm','Table Output','A1:BQ100000'); % reads COPCAT database with PISA parameters
+[Database.num,Database.txt,Database.raw] = xlsread('COPCAT_Input.xlsm','Table Output','A1:BV100'); % reads COPCAT database with PISA parameters
 Database.txt                             = Database.txt(2:end,:);           % filters the text part of the database only
 
 
 for ii = 1:size(Input.objective_layer,1)
     index = find(strcmp(Input.BaseSoil{ii}, Database.txt(:,1)));
-    Input.SoilType(ii,1) = Database.txt(index,5);
+    Input.SoilType(ii,1) = Database.txt(index,8);
 end
 
 end 

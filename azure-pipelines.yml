@@ -9,8 +9,6 @@ trigger:
 pool:
   vmImage: ubuntu-latest
 
-name: '$(majorVersion).$(minorVersion)$(Rev:.r)'
-
 steps:
 - task: CopyFiles@2
   inputs:
