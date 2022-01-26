@@ -25,19 +25,20 @@ for i = 1:NumberofGeometry
             figure(Number_figure)
             
             hold on
-            text=['Geometry No. = ',char(CallModels(i)),'under load',calibration.level{ii}];
+            Text_1=['Geometry No. = ',char(CallModels(i)),'under load',calibration.level{ii}];
             subplot(1,2,1)
-            title(text)
+            title(Text_1)
             hold on
             plot(model(i).result(ii).moment(:,3),model(i).result(ii).moment(:,1),'-KX')
             plot(model(i).result(ii).moment(:,2),model(i).result(ii).moment(:,1), '-rx')
             ylabel('Depth [m]')
             xlabel('Moment [kNm]')
             
-            str_txt=['Produced by COPCAT version', CopcatVersion];
+            str_txt=['Produced by COPCAT version: ', CopcatVersion];
             Xlim=xlim(gca); x_txt=mean(Xlim);
-            htxt=text(x_txt,0,[str_txt '\newline ']);
-            htxt.HorizontalAlignment='right';
+            Ylim=ylim(gca); y_txt=Ylim(1);
+            htxt=text(x_txt,y_txt,[str_txt '\newline ']);
+            htxt.HorizontalAlignment='center';
             htxt.VerticalAlignment='bottom';
             
             grid on
@@ -59,7 +60,7 @@ for i = 1:NumberofGeometry
             
             Number_figure=Number_figure+10;
             figure(Number_figure)
-            text=['Geometry No. = ',char(CallModels(i)),'under load',calibration.level{ii}];
+            Text_2=['Geometry No. = ',char(CallModels(i)),'under load',calibration.level{ii}];
             plot(model(i).result(ii).load_displacement(:,1),(model(i).result(ii).load_displacement(:,3))/1000,'-KX')
             hold on
             plot(model(i).result(ii).load_displacement(:,1),(model(i).result(ii).load_displacement(:,2))/1000,'-rx')
@@ -75,15 +76,16 @@ for i = 1:NumberofGeometry
             Adif=Aref-Asimul;
             Nehtha_1=(Aref-Adif)/Aref;
             
-            title([text,' and Pisa Error = ',num2str(Nehtha_1)]) 
+            title([Text_2,' and Pisa Error = ',num2str(Nehtha_1)]) 
             ylabel('Force [MN]')
             xlabel('Displacement m')
             legend('COPCAT - 1D', 'PLAXIS - 3D','Location','northeast')
             
-            str_txt=['Produced by COPCAT version', CopcatVersion];
+            str_txt=['Produced by COPCAT version: ', CopcatVersion];
             Xlim=xlim(gca); x_txt=mean(Xlim);
-            htxt=text(x_txt,0,[str_txt '\newline ']);
-            htxt.HorizontalAlignment='right';
+            Ylim=ylim(gca); y_txt=Ylim(1);
+            htxt=text(x_txt,y_txt,[str_txt '\newline ']);
+            htxt.HorizontalAlignment='center';
             htxt.VerticalAlignment='bottom';
             
             hold off
