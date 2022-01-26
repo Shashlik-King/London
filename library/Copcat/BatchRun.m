@@ -1,4 +1,4 @@
-function General_error = BatchRun(variable,loadcase,object_layers,PYcreator,CallModels,Weight,PLAX,calibration,scour,soil,pile,loads,settings,PlotSwitch,PYcreator_stiff,var_name,focus,constant,con_name,spring_type,Stratigraphy,Database,Apply_Direct_springs,txt_file_output,Input)
+function General_error = BatchRun(variable,loadcase,object_layers,PYcreator,CallModels,Weight,PLAX,calibration,scour,soil,pile,loads,settings,PlotSwitch,PYcreator_stiff,var_name,focus,constant,con_name,spring_type,Stratigraphy,Database,Apply_Direct_springs,txt_file_output,Input,CopcatVersion)
 [variable,constant] = Homo_Layered_Var(variable,constant,object_layers,Stratigraphy);
 Nrun_forward        = 0;
 NumberofGeometry    = size(CallModels,2);
@@ -48,7 +48,7 @@ end
 %% POSTPROCESSING
 %Plotting
 if PlotSwitch && PYcreator == 0
-    plot_results(calibration,model,CallModels); 
+    plot_results(calibration,model,CallModels,CopcatVersion); 
 elseif PlotSwitch && PYcreator==1
     close all
     plot_P_Y_CURVES(calibration,Global_Data,CallModels,object_layers,spring_type);  
