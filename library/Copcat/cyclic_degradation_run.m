@@ -1,4 +1,4 @@
-function [utilisation] = cyclic_degradation_run(variable,loadcase,object_layers,PYcreator,CallModels,Weight,PLAX,calibration,scour,soil,pile,loads,settings,~,PYcreator_stiff,var_name,~,constant,con_name,~,Stratigraphy,Database,Apply_Direct_springs,Cyclic_concept,Markov)
+function [utilisation] = cyclic_degradation_run(variable,loadcase,object_layers,PYcreator,CallModels,Weight,PLAX,calibration,scour,soil,pile,loads,settings,~,PYcreator_stiff,var_name,~,constant,con_name,~,Stratigraphy,Database,Apply_Direct_springs,Cyclic_concept,Markov,Input)
 
 %% Input definitions
 [variable,constant]=Homo_Layered_Var(variable,constant,object_layers,Stratigraphy);
@@ -13,62 +13,77 @@ interest_node = Cyclic_concept.interest_nodes;
 
 for Geo=1:size(CallModels,2)    % Run over the number of plaxis model
     markow.num=Markov.(CallModels{Geo}).num;
+    
+if strcmp(Input.Cyclic_style{1,2} , 'Zhang')
+    unique_markow = unique([markow.num(:,1) , markow.num(:,3)],'rows'); % Make unique Markov matrix
+    for ii = 1:size(unique_markow(:,1),1)
+        unique_markow(ii,3) = sum(markow.num((unique_markow(ii,1) == markow.num(:,1) & unique_markow(ii,2) == markow.num(:,3)),5));% accumulate count
+    end
+    markow.num = [unique_markow(:,1), zeros(size(unique_markow(:,1),1),1) , unique_markow(:,2), zeros(size(unique_markow(:,1),1),1) , unique_markow(:,3)];
+    multiplier.p = ones(1000,1);
+    multiplier.y = ones(1000,1);
+end
+
     if Cyclic_concept.Markov_switch==1
-        for level=1:size(markow.num,1)   % Run over the  load level of each models
-            for min_max = 1:4 % run for mean + range & mean - range
-                if min_max == 1 % min
-                    loadcase.H = markow.num(level,4) - markow.num(level,3)/2;
-                    loadcase.M = -markow.num(level,2) - markow.num(level,1)/2;
-                elseif min_max == 2 % max
-                    loadcase.H = markow.num(level,4) + markow.num(level,3)/2;
-                    loadcase.M = -markow.num(level,2) + markow.num(level,1)/2;
-                elseif min_max == 3 % max
-                    loadcase.H = markow.num(level,4) - markow.num(level,3)/2;
-                    loadcase.M = -markow.num(level,2) + markow.num(level,1)/2;
-                elseif min_max == 4 % max
-                    loadcase.H = markow.num(level,4) + markow.num(level,3)/2;
-                    loadcase.M = -markow.num(level,2) - markow.num(level,1)/2;
+        for level=1:size(markow.num,1)   % Run over the  load level of each models 
+            if strcmp(Input.Cyclic_style{1,2} , 'Normal') 
+                %% Normal cyclic run
+                for min_max = 1:4 % run for mean + range & mean - range
+                    if min_max == 1 % min
+                        loadcase.H = markow.num(level,4) - markow.num(level,3)/2;
+                        loadcase.M = -markow.num(level,2) - markow.num(level,1)/2;
+                    elseif min_max == 2 % max
+                        loadcase.H = markow.num(level,4) + markow.num(level,3)/2;
+                        loadcase.M = -markow.num(level,2) + markow.num(level,1)/2;
+                    elseif min_max == 3 % max
+                        loadcase.H = markow.num(level,4) - markow.num(level,3)/2;
+                        loadcase.M = -markow.num(level,2) + markow.num(level,1)/2;
+                    elseif min_max == 4 % max
+                        loadcase.H = markow.num(level,4) + markow.num(level,3)/2;
+                        loadcase.M = -markow.num(level,2) - markow.num(level,1)/2;
+                    end
+                
+                    [results] = run_COSPIN_utilisation(CallModels{Geo},Weight,PLAX.(CallModels{Geo}).(calibration.level{1}),PYcreator,variable,loadcase,object_layers,scour.(CallModels{Geo}), soil.(CallModels{Geo}), pile.(CallModels{Geo}), loads.(CallModels{Geo}), settings.(CallModels{Geo}),PYcreator_stiff,var_name,constant,con_name,Database,Apply_Direct_springs);
+                    disp(strcat('Calculation for index_' , num2str(level),'_', num2str(min_max)))
+                    utilisation{level,min_max} = results.utilisation;
+                    
+                    if Geo == 1 && level == 1 && min_max == 1
+                        soil_type = results.soil_type;
+                    end
+                    clear results    
                 end
-                
-                %%%%%%%%%%%  update the soil springs based on privous load
-                %%%%%%%%%%%  parcel 
-                
-                
-                
-               
-                
-                
-                
-                
-                %%% if level==1:
-                    %Cyclic curve = static curve 
-                
-                %%%else:
-                
-                %    Cyclic Curve = update curve (Static_PY[:,:], Static M_t[:,:],(P_multipier, Y multiplier)[:,1](level-1))
-                
-                %end 
-                
-                [results] = run_COSPIN_utilisation(CallModels{Geo},Weight,PLAX.(CallModels{Geo}).(calibration.level{1}),PYcreator,variable,loadcase,object_layers,scour.(CallModels{Geo}), soil.(CallModels{Geo}), pile.(CallModels{Geo}), loads.(CallModels{Geo}), settings.(CallModels{Geo}),PYcreator_stiff,var_name,constant,con_name,Database,Apply_Direct_springs);
-                disp(strcat('Calculation for index_' , num2str(level),'_', num2str(min_max)))
-                utilisation{level,min_max} = results.utilisation;
-                
-                
-                
-                %  NEq [:,1](level) = Strain accumulation function  (utilization , contour diagrams)
-                %  (P_multipier, Y multiplier)[:,1](level)= springs_modifier(NEq [:,1](level), Contour_diagrams, Static_PY[:,:], Static M_t[:,:])  
-                 
-                
-                
-                
-                
-                
-                
-                if Geo == 1 && level == 1 && min_max == 1
-                soil_type = results.soil_type;
+                    
+            elseif strcmp(Input.Cyclic_style{1,2} , 'Zhang')
+
+                if level == 1   
+                % First run
+                    loadcase.H = markow.num(level,3)/2;
+                    loadcase.M = -markow.num(level,1)/2;
+                    [results] = run_COSPIN_utilisation_Zhang(CallModels{Geo},Weight,PLAX.(CallModels{Geo}).(calibration.level{1}),PYcreator,variable,loadcase,object_layers,scour.(CallModels{Geo}), soil.(CallModels{Geo}), pile.(CallModels{Geo}), loads.(CallModels{Geo}), settings.(CallModels{Geo}),PYcreator_stiff,var_name,constant,con_name,Database,Apply_Direct_springs,Input,multiplier);
+                    disp(strcat('Calculation for index_' , num2str(level)))
+                    utilisation{level,1} = results.utilisation;
+                    
+                    for jj = 1:size(results.utilisation,1)
+                        load(['Plaxisfiles\Batches\CSR_N_axis_',results.element.batch{jj},'.mat']);
+                        load(['Plaxisfiles\Batches\gamma_matrix_',results.element.batch{jj},'.mat']);
+                        gamma_old = retrive_gamma(markow.num(1,5),utilisation{level,1}(jj,2),CSR_N_axis,gamma_matrix);
+                        %  [multiplier]= springs_modifier(N, results.element.batch{jj});
+                    end
+                else
+                    % Other runs
+                    loadcase.H = markow.num(level,3)/2;
+                    loadcase.M = -markow.num(level,1)/2;
+                    [results] = run_COSPIN_utilisation_Zhang(CallModels{Geo},Weight,PLAX.(CallModels{Geo}).(calibration.level{1}),PYcreator,variable,loadcase,object_layers,scour.(CallModels{Geo}), soil.(CallModels{Geo}), pile.(CallModels{Geo}), loads.(CallModels{Geo}), settings.(CallModels{Geo}),PYcreator_stiff,var_name,constant,con_name,Database,Apply_Direct_springs,Input,multiplier);
+                    disp(strcat('Calculation for index_' , num2str(level)))
+                    utilisation{level,1} = results.utilisation;
+                    for jj = 1:size(results.utilisation,1)
+                        load(['Plaxisfiles\Batches\CSR_N_axis_',results.element.batch{jj},'.mat']);
+                        load(['Plaxisfiles\Batches\gamma_matrix_',results.element.batch{jj},'.mat']);
+                        [N_eq_new,gamma_old,N_eq]  = N_eq_calc(utilisation{level - 1,1}(jj,2),gamma_old,utilisation{level,1}(jj,2),markow.num(level,5),CSR_N_axis,gamma_matrix);
+                        %  [multiplier]= springs_modifier(N_eq_new, results.element.batch{jj}); 
+                    end
                 end
-                clear results
-            end
+            end 
         end
         
         main_folder = strcat('output\',CallModels{Geo});

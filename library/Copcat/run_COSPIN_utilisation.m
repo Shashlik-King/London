@@ -234,7 +234,9 @@ pile.toe = pile.head - pile.L; % pile toe level
 % if settings.rotationalmultipliers
 %     [element,soil] = interimRotationalMultipliers (element,soil);
 % end
-
+if strcmp(Input.Cyclic_style{1,2} , 'Zhang')
+    [element,soil] = cyclic_Zhang_multi(element,multiplier);
+end
 %--------------------------------------------------------------------------
 %% Axial calculation / t-z curves / Q-z curves
 %--------------------------------------------------------------------------

@@ -60,7 +60,7 @@ for Geo=1:size(CallModels,2)
     
     settings.(CallModels{Geo}).model_name 		  = CallModels{Geo};
     settings.(CallModels{Geo}).lateralmultipliers = 0;
-    [scour.(CallModels{Geo}), soil.(CallModels{Geo}), pile.(CallModels{Geo}), loads.(CallModels{Geo}), settings.(CallModels{Geo})] = manual_data_input_excel(settings.(CallModels{Geo})); % load soil and pile information from Exce-file
+    [scour.(CallModels{Geo}), soil.(CallModels{Geo}), pile.(CallModels{Geo}), loads.(CallModels{Geo}), settings.(CallModels{Geo})] = manual_data_input_excel(settings.(CallModels{Geo}),Input); % load soil and pile information from Exce-file
     
     soil.(CallModels{Geo}).function_types_name 	 = Input.Function_Type_Name; 		 % defines names of the function types
     soil.(CallModels{Geo}).function_types 		 = cell2mat(Input.Function_Type); 	 % defines the function types
@@ -131,7 +131,7 @@ General_error   = BatchRun(variable,loadcase,object_layers,PYcreator,CallModels,
 
 if Cyclic_concept.Main
 PlotSwitch=0;   
-[utilisation] = cyclic_degradation_run(variable,loadcase,object_layers,PYcreator,CallModels,Weight,PLAX,calibration,scour,soil,pile,loads,settings,PlotSwitch,PYcreator_stiff,var_name,focus,constant,con_name,spring_type,Stratigraphy,Database,Apply_Direct_springs,Cyclic_concept,Markov);
+[utilisation] = cyclic_degradation_run(variable,loadcase,object_layers,PYcreator,CallModels,Weight,PLAX,calibration,scour,soil,pile,loads,settings,PlotSwitch,PYcreator_stiff,var_name,focus,constant,con_name,spring_type,Stratigraphy,Database,Apply_Direct_springs,Cyclic_concept,Markov,Input);
 end 
 
 if txt_file_output 

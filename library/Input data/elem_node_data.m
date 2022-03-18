@@ -18,7 +18,7 @@
 
 function [element,node, pile]=elem_node_data(pile,soil,scour,settings,data,variable,object_layers,PLAX,PYcreator,var_name,constant,con_name,PYcreator_stiff,Database)
 
-%Overburden reduction and scour level
+%% Overburden reduction and scour level
 ORD_level    = soil.toplevel(1)-scour.ORD;
 scour_level  = soil.toplevel(1)-scour.local;
 
@@ -30,7 +30,7 @@ end
 %     warning('Routine:PileToeAtBoundary','Pile toe level is located at a soil layer boundary. The layer directly below the pile toe is disregarded.')
 % end
 
-% Dividing the pile into parts, where either a change in pile cross section
+%% Dividing the pile into parts, where either a change in pile cross section
 % or soil profile is present.
 toplevels=sort(unique([scour_level ; ORD_level ; soil.toplevel ; pile.cross_section.toplevel ]),1,'descend'); %all layer boundaries
 
@@ -48,7 +48,7 @@ section_levels2=sort(unique([pile.head ; toplevels(k+1:j-1) ; pile.toe; (pile.to
 nsections=length(section_levels)-1;
 nsections2=length(section_levels2)-1;
 
-%Preallocation
+%% Preallocation
 node.level                      = zeros(1000,1);
 node.level(1)                   = pile.head;
 node.sigma_v_eff                = zeros(1000,1);
@@ -84,42 +84,25 @@ element.degradation_py_y        = zeros(1000,1);
 nel_tot                         = 0;
 nel                             = zeros(1,nsections);
 element.soil_layer              = zeros(1000,1);
+element.batch                   = cell(1000,1);
+element.Ns                      = zeros(1000,1);
+element.min_CSR                 = zeros(1000,1);
 % element.soil_type               = cell(1000,1);
 
-%%%%%For PISA Inverse analysis PNGI
-nLayer=size(soil.gamma_eff,1);
-
-Pisa_par_Sand=zeros(nLayer,24);
-Pisa_par_Sand(:,:)=100000;
-
-
-Pisa_par_Clay=zeros(nLayer,27);
-Pisa_par_Clay(:,:)=100000;
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-
-%Generating element and node data
+%% Generating element and node data
 for i=1:nsections %Through all sections
     
     dsec          = section_levels(i)-section_levels(i+1);    % Length of section
     nel(i)        = ceil(dsec*settings.nelem_factor);         % Number of elements in section
-    
-    %%%%% Node coordinates
-    node.level(nel_tot+1:nel_tot+1+nel(i)) = node.level(nel_tot+1) + dsec * linspace(0,-1,nel(i)+1);
-    
-    %%%%% Fetching material parameters for current section
+    node.level(nel_tot+1:nel_tot+1+nel(i)) = node.level(nel_tot+1) + dsec * linspace(0,-1,nel(i)+1); % Node coordinates
     soil_index = find(section_levels(i) <= soil.toplevel,1,'last');
     pile_index = find(section_levels(i) <= pile.cross_section.toplevel,1,'last');
-    
-    
 
-
-    
-    if isempty(pile_index); 
+    if isempty(pile_index) 
         error('No pile cross section data is given for the top of the pile.')
     end
     
-    if isempty(soil_index); % if no soil is specified, above seabed
+    if isempty(soil_index) % if no soil is specified, above seabed
         cu                                              = 0;   
         delta_cu                                        = 0; 
         dist_cu                                         = 0;
@@ -155,6 +138,9 @@ for i=1:nsections %Through all sections
         element.degradation_py_p(nel_tot+1:nel_tot+nel(i))= ones(nel(i),1);
         element.degradation_py_y(nel_tot+1:nel_tot+nel(i))= ones(nel(i),1);
         element.soil_layer(nel_tot+1:nel_tot+nel(i))    = 0; % FKMV
+        element.batch(nel_tot+1:nel_tot+nel(i))         = {'Not defined'};
+        element.Ns(nel_tot+1:nel_tot+nel(i))            = 0;
+        element.min_CSR(nel_tot+1:nel_tot+nel(i))       = 0;
 %         element.soil_type(nel_tot+1:nel_tot+nel(i))     = {'Zero soil'}; % FKMV
     else % below seabed (scour hole is taken into account below where zero soil is applied
         cu                                              = soil.cu(soil_index);
@@ -162,16 +148,6 @@ for i=1:nsections %Through all sections
         dist_cu                                         = soil.toplevel(soil_index)-node.level(nel_tot+1); % The distance from top of the section to top of the soil layer (where cu/G0 was defined)
         G0                                              = soil.G0(soil_index);
         Dr                                              = soil.Dr(soil_index);
-        
-        
-
-
-      
-        
-        
-        
-        
-  
         delta_G0                                        = soil.delta_G0(soil_index);
         epsilon50                                       = soil.epsilon50(soil_index);
         delta_epsilon50                                 = soil.delta_epsilon50(soil_index);
@@ -184,10 +160,7 @@ for i=1:nsections %Through all sections
         element.gamma_eff(nel_tot+1:nel_tot+nel(i))     = soil.gamma_eff(soil_index);
         element.J(nel_tot+1:nel_tot+nel(i))             = soil.J(soil_index);
         element.phi(nel_tot+1:nel_tot+nel(i))           = soil.phi(soil_index);
-        element.Dr(nel_tot+1:nel_tot+nel(i))           = soil.Dr(soil_index);  
-
-%         element.n(nel_tot+1:nel_tot+nel(i))                      = soil.n(soil_index);
-
+        element.Dr(nel_tot+1:nel_tot+nel(i))            = soil.Dr(soil_index);  
         element.delta_eff(nel_tot+1:nel_tot+nel(i))     = soil.delta_eff(soil_index);
         element.c_eff(nel_tot+1:nel_tot+nel(i))         = soil.c_eff(soil_index);
         element.K0(nel_tot+1:nel_tot+nel(i))            = soil.K0(soil_index);
@@ -204,12 +177,15 @@ for i=1:nsections %Through all sections
         element.degradation_py_p(nel_tot+1:nel_tot+nel(i))= soil.degradation.value_py_p(soil_index);
         element.degradation_py_y(nel_tot+1:nel_tot+nel(i))= soil.degradation.value_py_y(soil_index);
         element.soil_layer(nel_tot+1:nel_tot+nel(i))    = soil.layer(soil_index);
+        element.batch(nel_tot+1:nel_tot+nel(i))         = soil.degradation.batch(soil_index);
+        element.Ns(nel_tot+1:nel_tot+nel(i))            = soil.degradation.Ns(soil_index);
+        element.min_CSR(nel_tot+1:nel_tot+nel(i))       = soil.degradation.min_CSR(soil_index);
 %         element.soil_type(nel_tot+1:nel_tot+nel(i))    = soil.soiltype(1); % FKMV to be solved into a vector
     end
     
     element.thickness(nel_tot+1:nel_tot+nel(i),1) = pile.cross_section.thickness(pile_index);
     
-    %%%%% Correcting for local scour and consequently ORD
+    %% Correcting for local scour and consequently ORD
     if node.level(nel_tot+1)>scour_level %if the section is above scour level
         gamma_eff_corr = 0;
         element.gamma_eff(nel_tot+1:nel_tot+nel(i)) = gamma_eff_corr; % elements above scour need to have 0 weight in order to calculate plug weight correctly (this is done based on elements)
@@ -223,36 +199,30 @@ for i=1:nsections %Through all sections
         gamma_eff_corr = element.gamma_eff(nel_tot+1);
     end
     
-    %%%%% Effective vertical stresses (not taking ORD and local scour into account)
+    % Effective vertical stresses (not taking ORD and local scour into account)
     node.sigma_v_eff_noscour(nel_tot+1:nel_tot+1+nel(i)) = node.sigma_v_eff_noscour(nel_tot+1) + element.gamma_eff(nel_tot+1) * dsec * linspace(0,1,nel(i)+1);
-    %%%%% Effective vertical stresses (taking ORD and local scour into account)
+    % Effective vertical stresses (taking ORD and local scour into account)
     node.sigma_v_eff(nel_tot+1:nel_tot+1+nel(i)) = node.sigma_v_eff(nel_tot+1) + gamma_eff_corr * dsec * linspace(0,1,nel(i)+1);
-    
-    %%%%% cu in top and bottom of elements
+    % cu in top and bottom of elements
     element.cu(nel_tot+1:nel_tot+nel(i),1) = cu + delta_cu * (dsec * linspace(0,(nel(i)-1)/nel(i),nel(i)) + dist_cu);
     element.cu(nel_tot+1:nel_tot+nel(i),2) = cu + delta_cu * (dsec * linspace(1/nel(i),1,nel(i)) + dist_cu);
-
-    
-    %%%%% G0 in top and bottom of elements
+    % G0 in top and bottom of elements
     element.G0(nel_tot+1:nel_tot+nel(i),1) = G0 + delta_G0 * (dsec * linspace(0,(nel(i)-1)/nel(i),nel(i)) + dist_cu);
     element.G0(nel_tot+1:nel_tot+nel(i),2) = G0 + delta_G0 * (dsec * linspace(1/nel(i),1,nel(i)) + dist_cu);
-    
     %%%%% epsilon50 in top and bottom of elements
     element.epsilon50(nel_tot+1:nel_tot+nel(i),1) = epsilon50 + delta_epsilon50 * (dsec * linspace(0,(nel(i)-1)/nel(i),nel(i)) + dist_cu);
     element.epsilon50(nel_tot+1:nel_tot+nel(i),2) = epsilon50 + delta_epsilon50 * (dsec * linspace(1/nel(i),1,nel(i)) + dist_cu);
-	
 	%%%%% Es in top and bottom of elements
     element.Es(nel_tot+1:nel_tot+nel(i),1) = Es + delta_Es * (dsec * linspace(0,(nel(i)-1)/nel(i),nel(i)) + dist_cu);
     element.Es(nel_tot+1:nel_tot+nel(i),2) = Es + delta_Es * (dsec * linspace(1/nel(i),1,nel(i)) + dist_cu);
-    
     %%%%% q_ur in top and bottom of elements
     element.q_ur(nel_tot+1:nel_tot+nel(i),1) = q_ur + delta_q_ur * (dsec * linspace(0,(nel(i)-1)/nel(i),nel(i)) + dist_cu);
     element.q_ur(nel_tot+1:nel_tot+nel(i),2) = q_ur + delta_q_ur * (dsec * linspace(1/nel(i),1,nel(i)) + dist_cu);
-    
     nel_tot       = nel_tot+nel(i);      % Total number of elements;
+    
 end
     
-%Cutting away the preallocated, empty part of vectors;
+%% Cutting away the preallocated, empty part of vectors;
 node.level=node.level(1:nel_tot+1);
 node.sigma_v_eff=node.sigma_v_eff(1:nel_tot+1);
 node.sigma_v_eff_noscour=node.sigma_v_eff_noscour(1:nel_tot+1);
@@ -290,15 +260,12 @@ element.degradation_tz_z        = element.degradation_tz_z(1:nel_tot);
 element.degradation_py_p        = element.degradation_py_p(1:nel_tot);
 element.degradation_py_y        = element.degradation_py_y(1:nel_tot);
 element.soil_layer              = element.soil_layer(1:nel_tot);
+element.batch                   = element.batch(1:nel_tot);
+element.Ns                      = element.Ns(1:nel_tot);
+element.min_CSR                 = element.min_CSR(1:nel_tot);
 % element.soil_type              = element.soil_type(1:nel_tot);
-%%%%%%%%%%%%%%%%%%%%%
-% FKMV CHANGE
 
-% limitmark = find(abs(element.level(:,1)) >= 25);  % PNGI
-% lowerlim = [1:limitmark(1)-1];
-% upperlim = [limitmark(1):length(element.level(:,1))];
-
-% %adding an extra element below pile tip but with the same properties as the
+%% %adding an extra element below pile tip but with the same properties as the
 %last pile element
 extra_el_height=element.height(end)/5; %extra element height
 node.level=[node.level(1:nel_tot+1); node.level(end)-extra_el_height];
@@ -334,8 +301,12 @@ element.degradation_tz_z        = [element.degradation_tz_z(1:nel_tot); element.
 element.degradation_py_p        = [element.degradation_py_p(1:nel_tot); element.degradation_py_p(end)];
 element.degradation_py_y        = [element.degradation_py_y(1:nel_tot); element.degradation_py_y(end)];
 element.soil_layer              = [element.soil_layer(1:nel_tot); element.soil_layer(end)];
+element.batch                   = [element.batch(1:nel_tot); element.batch(end)];
+element.Ns                      = [element.Ns(1:nel_tot); element.Ns(end)];
+element.min_CSR                 = [element.min_CSR(1:nel_tot); element.min_CSR(end)];
 % element.soil_type              = [element.soil_type(1:nel_tot); element.soil_type(end)];
-%Calculating ep, pile element parameters
+
+%% Calculating ep, pile element parameters
 % ep [E A I D_eq Gm ksf]
 E = ones(size(element.thickness))*pile.E;
 A = ((pile.diameter-0*element.thickness).^2-(pile.diameter-2*element.thickness).^2)*pi/4;
@@ -345,27 +316,19 @@ Gm = ones(size(element.thickness))*pile.G;
 ksf = ones(size(element.thickness))*pile.ksf;
 element.ep = [E A I D_eq Gm ksf];
 
+%% PISA
 element.PISA_switch = settings.PISA_database;
-
 element.nelem = length(element.model_py); %number of elements in pile
 if exist('soil.tillchalk_start')
-    element.tillstart = soil.tillchalk_start; % FKMV
-    element.tillheqv = settings.tillheqv; % FKMV
+    element.tillstart = soil.tillchalk_start;
+    element.tillheqv = settings.tillheqv;
 end
 
-for iii = 1:element.nelem % FKMV
-    [element] = PISA_formulations_inverse_DB(pile,soil,element,scour,settings,data,iii,variable,Database); % FKMV - New PISA organisation giving PISA parameters as a vector  
+for iii = 1:element.nelem
+    [element] = PISA_formulations_inverse_DB(pile,soil,element,scour,settings,data,iii,variable,Database); % New PISA organisation giving PISA parameters as a vector  
     [element] = translate_PISA_param(element,variable,var_name,constant,con_name); % translates variable names specified in Inverse_Model into indecies which can be assigned to parameters
     [element] = PISA_param_overwrite(variable,constant,soil.function_types,object_layers,element,iii); % overwrites PISA parameters based on translated variables
     [element] = PISA_formulations_inverse_calculation(pile,soil,element,scour,settings,data,iii); % calculates the final parameters
 end
 
-% for ii = 1:length(soil.layer) % object_layers FKMV
-%     if PYcreator_stiff
-    % [soil]=input_inverse(soil,variable,object_layers,soil_index,Pisa_par_Sand,Pisa_par_Clay,PLAX,pile); 
-%     [soil,element] = ini_stiff_calc_PY(soil,object_layers(ii),soil_index,PLAX,pile,element);
-    % else
-    % [soil]=input_inverse2(soil,variable,object_layers,soil_index,Pisa_par_Sand,Pisa_par_Clay,PLAX,pile); 
-%     end
-% end
 end

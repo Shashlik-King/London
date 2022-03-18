@@ -1,4 +1,4 @@
-function [scour soil pile loads settings] = manual_data_input_excel(settings)
+function [scour, soil, pile, loads, settings] = manual_data_input_excel(settings , Input)
 %% MODULE TO IMPORT MANUAL INPUT DATA FROM EXCEL
 % FILE ENABLING THE USER TO INPUT DATA FROM EXCEL TO GET A BETTER OVERVIEW
 % OF THE DATA INSTEAD OF USING THE MATLAB-FILE, MANUAL_INPUT_DATA.M
@@ -11,7 +11,7 @@ function [scour soil pile loads settings] = manual_data_input_excel(settings)
 [num,txt] = xlsread('COPCAT_input.xlsm',settings.model_name);
 n_layers = num(1,2);
 n_sections = num(2,2);
-n_disp = num(3,2);
+% n_disp = num(3,2);
 location = txt(1,1);
 if strcmp(settings.model_name,location)
     disp('Match between chosen location and Excel-sheet headline')
@@ -116,4 +116,14 @@ if settings.lateralmultipliers
 else
 	soil.degradation.value_py_p = ones(length(soil.model_py),1); % [m]
 	soil.degradation.value_py_y = ones(length(soil.model_py),1); % [m]
+end
+
+if strcmp(Input.Cyclic_style{1,2} , 'Zhang') && Input.Cyclic_run{1,2} == 1 && Input.Markov_run{1,2} == 1
+	soil.degradation.batch  = txt(6:6+n_layers-1,46); % [m]
+	soil.degradation.Ns     = num(3:3+n_layers-1,47); % [m]
+    soil.degradation.min_CSR= num(3:3+n_layers-1,48); % [m]
+else
+	soil.degradation.batch  = ones(length(soil.model_py),1); % [m]
+	soil.degradation.Ns     = ones(length(soil.model_py),1); % [m]
+    soil.degradation.min_CSR= ones(length(soil.model_py),1); % [m]
 end
