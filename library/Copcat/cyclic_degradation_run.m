@@ -31,19 +31,19 @@ end
                 for min_max = 1:4 % run for mean + range & mean - range
                     if min_max == 1 % min
                         loadcase.H = markow.num(level,4) - markow.num(level,3)/2;
-                        loadcase.M = -markow.num(level,2) - markow.num(level,1)/2;
+                        loadcase.M = -(markow.num(level,2) - markow.num(level,1))/2;
                     elseif min_max == 2 % max
                         loadcase.H = markow.num(level,4) + markow.num(level,3)/2;
-                        loadcase.M = -markow.num(level,2) + markow.num(level,1)/2;
+                        loadcase.M = -(markow.num(level,2) + markow.num(level,1))/2;
                     elseif min_max == 3 % max
                         loadcase.H = markow.num(level,4) - markow.num(level,3)/2;
-                        loadcase.M = -markow.num(level,2) + markow.num(level,1)/2;
+                        loadcase.M = -(markow.num(level,2) + markow.num(level,1))/2;
                     elseif min_max == 4 % max
                         loadcase.H = markow.num(level,4) + markow.num(level,3)/2;
-                        loadcase.M = -markow.num(level,2) - markow.num(level,1)/2;
+                        loadcase.M = -(markow.num(level,2) - markow.num(level,1))/2;
                     end
                 
-                    [results] = run_COSPIN_utilisation(CallModels{Geo},Weight,PLAX.(CallModels{Geo}).(calibration.level{1}),PYcreator,variable,loadcase,object_layers,scour.(CallModels{Geo}), soil.(CallModels{Geo}), pile.(CallModels{Geo}), loads.(CallModels{Geo}), settings.(CallModels{Geo}),PYcreator_stiff,var_name,constant,con_name,Database,Apply_Direct_springs);
+                    [results] = run_COSPIN_utilisation(CallModels{Geo},Weight,PLAX.(CallModels{Geo}).(calibration.level{1}),PYcreator,variable,loadcase,object_layers,scour.(CallModels{Geo}), soil.(CallModels{Geo}), pile.(CallModels{Geo}), loads.(CallModels{Geo}), settings.(CallModels{Geo}),PYcreator_stiff,var_name,constant,con_name,Database,Apply_Direct_springs,Input);
                     disp(strcat('Calculation for index_' , num2str(level),'_', num2str(min_max)))
                     utilisation{level,min_max} = results.utilisation;
                     

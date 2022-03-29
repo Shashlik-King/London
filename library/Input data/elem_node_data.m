@@ -87,6 +87,7 @@ element.soil_layer              = zeros(1000,1);
 element.batch                   = cell(1000,1);
 element.Ns                      = zeros(1000,1);
 element.min_CSR                 = zeros(1000,1);
+element.cyclic_ult               = zeros(1000,1);
 % element.soil_type               = cell(1000,1);
 
 %% Generating element and node data
@@ -141,6 +142,7 @@ for i=1:nsections %Through all sections
         element.batch(nel_tot+1:nel_tot+nel(i))         = {'Not defined'};
         element.Ns(nel_tot+1:nel_tot+nel(i))            = 0;
         element.min_CSR(nel_tot+1:nel_tot+nel(i))       = 0;
+        element.cyclic_ult =element.cyclic_ult(1:nel_tot);
 %         element.soil_type(nel_tot+1:nel_tot+nel(i))     = {'Zero soil'}; % FKMV
     else % below seabed (scour hole is taken into account below where zero soil is applied
         cu                                              = soil.cu(soil_index);
@@ -180,6 +182,7 @@ for i=1:nsections %Through all sections
         element.batch(nel_tot+1:nel_tot+nel(i))         = soil.degradation.batch(soil_index);
         element.Ns(nel_tot+1:nel_tot+nel(i))            = soil.degradation.Ns(soil_index);
         element.min_CSR(nel_tot+1:nel_tot+nel(i))       = soil.degradation.min_CSR(soil_index);
+        element.cyclic_ult(nel_tot+1:nel_tot+nel(i))=soil.degradation.Cyclic_Ult(soil_index);
 %         element.soil_type(nel_tot+1:nel_tot+nel(i))    = soil.soiltype(1); % FKMV to be solved into a vector
     end
     
@@ -263,6 +266,7 @@ element.soil_layer              = element.soil_layer(1:nel_tot);
 element.batch                   = element.batch(1:nel_tot);
 element.Ns                      = element.Ns(1:nel_tot);
 element.min_CSR                 = element.min_CSR(1:nel_tot);
+element.cyclic_ult =element.cyclic_ult(1:nel_tot);
 % element.soil_type              = element.soil_type(1:nel_tot);
 
 %% %adding an extra element below pile tip but with the same properties as the
@@ -304,6 +308,7 @@ element.soil_layer              = [element.soil_layer(1:nel_tot); element.soil_l
 element.batch                   = [element.batch(1:nel_tot); element.batch(end)];
 element.Ns                      = [element.Ns(1:nel_tot); element.Ns(end)];
 element.min_CSR                 = [element.min_CSR(1:nel_tot); element.min_CSR(end)];
+element.cyclic_ult        = [element.cyclic_ult(1:nel_tot); element.cyclic_ult(end)];
 % element.soil_type              = [element.soil_type(1:nel_tot); element.soil_type(end)];
 
 %% Calculating ep, pile element parameters

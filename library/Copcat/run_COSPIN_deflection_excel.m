@@ -61,8 +61,13 @@ for loc = 1:size(ID,1)
     %--------------------------------------------------------------------------
     loads.static_cyclic             = 'cyclic'; % 'cyclic' or 'static' in accordance with DNV OS-J101
     loads.n_cycles                  = 100;      % Number of cycles, relevant for Stiff clay w/o water only!
-    loads.A                         = 'API';    % use API or TUHH (Dührkop) approach for determination of A, relevant for API/Kirsch sand
+    loads.A                         = 'P_NGI';    % use API or TUHH (Dührkop) approach for determination of A, relevant for API/Kirsch sand
 
+%     settings.Statc_cyclic=loads.static_cyclic;
+% 
+%     settings.Type_Degradation=loads.A;
+    
+    
     plots.pilehead_vs_length        = 0;        % 1 = yes, 0 = no
     plots.deflection_plot           = 1;        % 1 = yes, 0 = no
     plots.utilization_ratio         = 0;        % 1 = yes, 0 = no, settings.toe_shear = 0 if only p-y UR is of interest
@@ -75,8 +80,8 @@ for loc = 1:size(ID,1)
 
     settings.lateral_loading        = 1;        % calculate capacity for lateral loading? 1 = yes, 0 = no
     settings.beam_theory            = 1;        % 1 = Timoshenko, 0 = Euler-Bernoulli
-    settings.toe_shear              = 1;        % include base shear and moment? 1 = yes, 0 = no  
-    settings.mteta	                = 1;        % include uniformly distributed moment? 1 = yes, 0 = no 
+%     settings.toe_shear              = 1;        % include base shear and moment? 1 = yes, 0 = no  
+%     settings.mteta	                = 1;        % include uniformly distributed moment? 1 = yes, 0 = no 
     settings.Georgiadis				= 0;		% apply Georgiadis approach? 1 = yes, 0 = no
     settings.lateralmultipliers 	= 0; 		% account for p and y multipliers: 0-> not accounted 1-> accounted
     settings.rotationalmultipliers  = 0;        % account for m and theta multipliers: 0-> not accounted 1-> accounted

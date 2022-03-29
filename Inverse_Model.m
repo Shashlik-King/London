@@ -59,6 +59,15 @@ calibration.type        = 'sqpso';                                          % ei
 for Geo=1:size(CallModels,2)
     
     settings.(CallModels{Geo}).model_name 		  = CallModels{Geo};
+    
+    settings.(CallModels{Geo}).Statc_cyclic=Input.Static_cyclic{1,2};
+    settings.(CallModels{Geo}).Type_Degradation=Input.Cyclic_method{1,2};
+    settings.(CallModels{Geo}).toe_shear=cell2mat(Input.Toe_springs(1,2));
+    settings.(CallModels{Geo}).mteta=cell2mat(Input.Apply_Moment_springs(1,2));
+    
+    
+    
+    
     settings.(CallModels{Geo}).lateralmultipliers = 0;
     [scour.(CallModels{Geo}), soil.(CallModels{Geo}), pile.(CallModels{Geo}), loads.(CallModels{Geo}), settings.(CallModels{Geo})] = manual_data_input_excel(settings.(CallModels{Geo}),Input); % load soil and pile information from Exce-file
     

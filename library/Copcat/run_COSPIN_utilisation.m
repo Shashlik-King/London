@@ -3,7 +3,7 @@
 % RUN FILE FOR CMAT CALCULATION TOOL
 % CAN PERFORM AXIAL AND LATERAL BEARING CAPACITY CALCULATIONS
 % % % % % function [results] =
-function [results] = run_COSPIN_utilisation(Location,Weight,PLAX,PYcreator,variable,loadcase,object_layers,scour,soil,pile,loads,settings,PYcreator_stiff,var_name,constant,con_name,Database,Apply_Direct_springs) %PNGI
+function [results] = run_COSPIN_utilisation(Location,Weight,PLAX,PYcreator,variable,loadcase,object_layers,scour,soil,pile,loads,settings,PYcreator_stiff,var_name,constant,con_name,Database,Apply_Direct_springs,Input) %PNGI
 % clear
 % close all
 % clc
@@ -39,7 +39,7 @@ ID = Location;
 % load_case = loadcase;				 
 %%
 for loc = 1:size(ID,1)
-clearvars -except loc ID model pile_length_LC pile_length_end load_case object_layers variable PLAX PYcreator loadcase scour soil pile loads settings Weight PYcreator_stiff var_name constant con_name Database Apply_Direct_springs
+clearvars -except loc ID model pile_length_LC pile_length_end load_case object_layers variable PLAX PYcreator loadcase scour soil pile loads settings Weight PYcreator_stiff var_name constant con_name Database Apply_Direct_springs Input
 %data.load_case=	load_case;																		
 %% Project data
 %--------------------------------------------------------------------------
@@ -109,7 +109,16 @@ settings.torsion                = 0;        % calculate torsional stiffness? 1 =
 %--------------------------------------------------------------------------
 loads.static_cyclic             = 'cyclic'; % 'cyclic' or 'static' in accordance with DNV OS-J101
 loads.n_cycles                  = 100;      % Number of cycles, relevant for Stiff clay w/o water only!
-loads.A                         = 'API';    % use API or TUHH (Dührkop) approach for determination of A, relevant for API/Kirsch sand
+loads.A                         = 'P_NGI';    % use API or TUHH (Dührkop) approach for determination of A, relevant for API/Kirsch sand
+
+
+settings.Statc_cyclic=loads.static_cyclic;
+
+settings.Type_Degradation=loads.A;
+
+
+
+
 
 plots.pilehead_vs_length        = 0;        % 1 = yes, 0 = no
 plots.deflection_plot           = 1;        % 1 = yes, 0 = no
