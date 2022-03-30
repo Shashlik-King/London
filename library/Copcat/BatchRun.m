@@ -27,7 +27,7 @@ for Geo = 1:size(CallModels,2)    % Run over the number of plaxis model
                         NStepMultiplier = 25;
                 end
                 Nrun_forward= Nrun_forward+1;
-                [load_dips_curve,DB_output,Global_Data(Geo).output_COPCAT.(calibration.level{level}).load_def] = run_COSPIN_load_def_final(CallModels{Geo},Weight,PLAX.(CallModels{Geo}).(calibration.level{level}),PYcreator,variable,loadcase.(CallModels{Geo}).(calibration.level{level}),object_layers,scour.(CallModels{Geo}), soil.(CallModels{Geo}), pile.(CallModels{Geo}), loads.(CallModels{Geo}), settings.(CallModels{Geo}),PYcreator_stiff,NStepMultiplier,var_name,constant,con_name,Database,Apply_Direct_springs,txt_file_output,output_COPCAT);
+                [load_dips_curve,DB_output,Global_Data(Geo).output_COPCAT.(calibration.level{level}).load_def] = run_COSPIN_load_def_final(CallModels{Geo},Weight,PLAX.(CallModels{Geo}).(calibration.level{level}),PYcreator,variable,loadcase.(CallModels{Geo}).(calibration.level{level}),object_layers,scour.(CallModels{Geo}), soil.(CallModels{Geo}), pile.(CallModels{Geo}), loads.(CallModels{Geo}), settings.(CallModels{Geo}),PYcreator_stiff,NStepMultiplier,var_name,constant,con_name,Database,Apply_Direct_springs,txt_file_output,Global_Data(Geo).output_COPCAT);
             else
                 load_dips_curve.load_displacement = 0;
             end
@@ -57,6 +57,10 @@ end
 % MySQL DB Output
 if PlotSwitch && Input.Database_update{1,2}
     DB_write(DB_output,Input,spring_type);
+    
+    %%%% Write the PISA Fianl Parameters
+    
+    
 else
     disp('No update of the Database chosen.')
 end
