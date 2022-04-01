@@ -4,7 +4,7 @@ function [N] = retrive_N (gamma,CSR,CSR_N_axis,gamma_matrix)
 
 n               = CSR_N_axis(:,1);
 csr             = CSR_N_axis(:,2);
-N               = [];
+N                = [];
 [~,CSR_index]   = min(abs(csr-CSR));
 g_prelim        = gamma_matrix(CSR_index,:);   
 g               = g_prelim(~isnan(g_prelim));         %Column of gamma_matrix, corresponding to cyclice stress ratio "CSR" given as input
@@ -15,6 +15,7 @@ if max(g) >= gamma && min(g) <= gamma   %If "gamma" given as input is lower or b
     N                = n(gamma_index);
     
 else
+%     N                = 1;
     if g(end) < gamma
         disp('gamma is too big');
     elseif g(1) > gamma 

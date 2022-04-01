@@ -130,8 +130,12 @@ UB = cell2mat(UB);
 General_error   = BatchRun(variable,loadcase,object_layers,PYcreator,CallModels,Weight,PLAX,calibration,scour,soil,pile,loads,settings,1,PYcreator_stiff,var_name,focus,constant,con_name,spring_type,Stratigraphy,Database,Apply_Direct_springs,txt_file_output,Input);
 
 if Cyclic_concept.Main
-PlotSwitch=0;   
-[utilisation] = cyclic_degradation_run(variable,loadcase,object_layers,PYcreator,CallModels,Weight,PLAX,calibration,scour,soil,pile,loads,settings,PlotSwitch,PYcreator_stiff,var_name,focus,constant,con_name,spring_type,Stratigraphy,Database,Apply_Direct_springs,Cyclic_concept,Markov,Input);
+    PlotSwitch=0;   
+    if strcmp(Input.Cyclic_style{1,2} , 'Zhang')
+        [utilisation] = cyclic_degradation_run_Zhang(variable,loadcase,object_layers,PYcreator,CallModels,Weight,PLAX,calibration,scour,soil,pile,loads,settings,PlotSwitch,PYcreator_stiff,var_name,focus,constant,con_name,spring_type,Stratigraphy,Database,Apply_Direct_springs,Cyclic_concept,Markov,Input);
+    elseif strcmp(Input.Cyclic_style{1,2} , 'Normal')
+        [utilisation] = cyclic_degradation_run(variable,loadcase,object_layers,PYcreator,CallModels,Weight,PLAX,calibration,scour,soil,pile,loads,settings,PlotSwitch,PYcreator_stiff,var_name,focus,constant,con_name,spring_type,Stratigraphy,Database,Apply_Direct_springs,Cyclic_concept,Markov,Input);
+    end
 end 
 
 if txt_file_output 
