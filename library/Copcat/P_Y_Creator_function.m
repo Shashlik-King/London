@@ -71,6 +71,10 @@ loads.static_cyclic             = 'static'; % 'cyclic' or 'static' in accordance
 loads.n_cycles                  = 100;      % Number of cycles, relevant for Stiff clay w/o water only!
 loads.A                         = 'API';    % use API or TUHH (Dührkop) approach for determination of A, relevant for API/Kirsch sand
 
+settings.Statc_cyclic=loads.static_cyclic;
+
+settings.Type_Degradation=loads.A;
+
 plots.pilehead_vs_length        = 0;        % 1 = yes, 0 = no
 plots.deflection_plot           = 1;        % 1 = yes, 0 = no
 plots.utilization_ratio         = 0;        % 1 = yes, 0 = no, settings.toe_shear = 0 if only p-y UR is of interest

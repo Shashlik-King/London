@@ -6,13 +6,13 @@ Residual            = [];
 for Geo = 1:size(CallModels,2)    % Run over the number of plaxis model
     for level = 1:size(calibration.level,2)   % Run over the  load level of each models  
         if PYcreator == 1       % SSI Creator  only  
-            [ResidualSingle,Global_Data(Geo).(calibration.level{level}),DB_output,output_COPCAT] = P_Y_Creator_function(CallModels{Geo},Weight,PLAX.(CallModels{Geo}).(calibration.level{level}),PYcreator,variable,loadcase.(CallModels{Geo}).(calibration.level{level}),object_layers,scour.(CallModels{Geo}), soil.(CallModels{Geo}), pile.(CallModels{Geo}), loads.(CallModels{Geo}), settings.(CallModels{Geo}),PYcreator_stiff,PlotSwitch,var_name,constant,con_name,spring_type,Database,Apply_Direct_springs,txt_file_output);
+            [ResidualSingle,Global_Data(Geo).(calibration.level{level}),DB_output,Global_Data(Geo).output_COPCAT] = P_Y_Creator_function(CallModels{Geo},Weight,PLAX.(CallModels{Geo}).(calibration.level{level}),PYcreator,variable,loadcase.(CallModels{Geo}).(calibration.level{level}),object_layers,scour.(CallModels{Geo}), soil.(CallModels{Geo}), pile.(CallModels{Geo}), loads.(CallModels{Geo}), settings.(CallModels{Geo}),PYcreator_stiff,PlotSwitch,var_name,constant,con_name,spring_type,Database,Apply_Direct_springs,txt_file_output);
              Residual = [Residual;ResidualSingle];
         end
         if PYcreator == 0  % Pile response analysis 
             if strcmp(calibration.involvment,'def') || strcmp(calibration.involvment,'mom') || strcmp(calibration.involvment,'def_mom')  || strcmp(calibration.involvment,'def_mom')  || strcmp(calibration.involvment,'def_mom_defmud')  || strcmp(calibration.involvment,'def_defmud')
                 Nrun_forward            = Nrun_forward+1;
-                [results,DB_output,output_COPCAT.(calibration.level{level}).output]     = run_COSPIN_deflection_excel(CallModels{Geo},Weight,PLAX.(CallModels{Geo}).(calibration.level{level}),PYcreator,variable,loadcase.(CallModels{Geo}).(calibration.level{level}),object_layers,scour.(CallModels{Geo}), soil.(CallModels{Geo}), pile.(CallModels{Geo}), loads.(CallModels{Geo}), settings.(CallModels{Geo}),PYcreator_stiff,var_name,constant,con_name,Database,Apply_Direct_springs,txt_file_output);
+                [results,DB_output,Global_Data(Geo).output_COPCAT.(calibration.level{level}).output]     = run_COSPIN_deflection_excel(CallModels{Geo},Weight,PLAX.(CallModels{Geo}).(calibration.level{level}),PYcreator,variable,loadcase.(CallModels{Geo}).(calibration.level{level}),object_layers,scour.(CallModels{Geo}), soil.(CallModels{Geo}), pile.(CallModels{Geo}), loads.(CallModels{Geo}), settings.(CallModels{Geo}),PYcreator_stiff,var_name,constant,con_name,Database,Apply_Direct_springs,txt_file_output);
             else
                 results.shear           = 0;
                 results.moment          = 0;
@@ -27,7 +27,7 @@ for Geo = 1:size(CallModels,2)    % Run over the number of plaxis model
                         NStepMultiplier = 25;
                 end
                 Nrun_forward= Nrun_forward+1;
-                [load_dips_curve,DB_output,output_COPCAT.(calibration.level{level}).load_def] = run_COSPIN_load_def_final(CallModels{Geo},Weight,PLAX.(CallModels{Geo}).(calibration.level{level}),PYcreator,variable,loadcase.(CallModels{Geo}).(calibration.level{level}),object_layers,scour.(CallModels{Geo}), soil.(CallModels{Geo}), pile.(CallModels{Geo}), loads.(CallModels{Geo}), settings.(CallModels{Geo}),PYcreator_stiff,NStepMultiplier,var_name,constant,con_name,Database,Apply_Direct_springs,txt_file_output,output_COPCAT);
+                [load_dips_curve,DB_output,Global_Data(Geo).output_COPCAT.(calibration.level{level}).load_def] = run_COSPIN_load_def_final(CallModels{Geo},Weight,PLAX.(CallModels{Geo}).(calibration.level{level}),PYcreator,variable,loadcase.(CallModels{Geo}).(calibration.level{level}),object_layers,scour.(CallModels{Geo}), soil.(CallModels{Geo}), pile.(CallModels{Geo}), loads.(CallModels{Geo}), settings.(CallModels{Geo}),PYcreator_stiff,NStepMultiplier,var_name,constant,con_name,Database,Apply_Direct_springs,txt_file_output,Global_Data(Geo).output_COPCAT);
             else
                 load_dips_curve.load_displacement = 0;
             end
@@ -57,20 +57,24 @@ end
 % MySQL DB Output
 if PlotSwitch && Input.Database_update{1,2}
     DB_write(DB_output,Input,spring_type);
+    
+    %%%% Write the PISA Fianl Parameters
+    
+    
 else
     disp('No update of the Database chosen.')
 end
 
 % Text Output
 if PlotSwitch && txt_file_output
-    txt_file_output_fun(CallModels,Geo,output_COPCAT,calibration,txt_file_output,PYcreator)
+    txt_file_output_fun(CallModels,Geo,Global_Data(1).output_COPCAT,calibration,txt_file_output,PYcreator)
 else
     disp('No .txt output chosen.')
 end
 
 % Log files
 if PlotSwitch && txt_file_output
-    txt_file_output_fun(CallModels,Geo,output_COPCAT,calibration,txt_file_output,PYcreator)
+    txt_file_output_fun(CallModels,Geo,Global_Data(1).output_COPCAT,calibration,txt_file_output,PYcreator)
 else
     disp('No log files chosen.')
 end

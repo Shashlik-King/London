@@ -57,6 +57,10 @@ Range = {'Calibration' 'B3:C3'
 'Markov_plot_size' 'B52:C52'
 'Sand_CSR' 'B53:C53'
 'Cyclic_style' 'B54:C54'
+'Static_cyclic' 'B58:C58'
+'Cyclic_method' 'B59:C59'
+'Toe_springs'  'B60:C60'
+'Apply_Moment_springs'  'B61:C61' 
 };
 
 [~,~,Input_raw] = xlsread(Files{1,1},Sheets{1,1});

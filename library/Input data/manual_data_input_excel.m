@@ -96,6 +96,16 @@ soil.Nq                     = num(3:3+n_layers-1,36); % [-]
 soil.degradation.value_tz_t = num(3:3+n_layers-1,37); % [m]
 soil.degradation.value_tz_z = num(3:3+n_layers-1,38); % [m]
 
+soil.degradation.Cyclic_Ult = num(3:3+n_layers-1,45); % [m]
+if (any(isnan(soil.degradation.Cyclic_Ult)))
+    soil.degradation.Cyclic_Ult(:)=1;
+end 
+
+
+
+
+
+
 %%%%%%%%Fake   PNGI 
 
 soil.Dr=soil.G0;
@@ -122,8 +132,13 @@ if strcmp(Input.Cyclic_style{1,2} , 'Zhang') && Input.Cyclic_run{1,2} == 1 && In
 	soil.degradation.batch  = txt(6:6+n_layers-1,46); % [m]
 	soil.degradation.Ns     = num(3:3+n_layers-1,47); % [m]
     soil.degradation.min_CSR= num(3:3+n_layers-1,48); % [m]
+
 else
-	soil.degradation.batch  = ones(length(soil.model_py),1); % [m]
+    
+    C    = cell(length(soil.model_py),1);
+    C(:) = {'NO Contour assigend '};
+
+	soil.degradation.batch  = C; % [m]
 	soil.degradation.Ns     = ones(length(soil.model_py),1); % [m]
     soil.degradation.min_CSR= ones(length(soil.model_py),1); % [m]
 end

@@ -421,6 +421,11 @@ for i=1:nelem %through all elements
         % -------------------------------------------------------------------------
     elseif settings.PISA_database == 1 && strcmp(element.model_py(i),'Zero soil')==0
         
+        
+        loads.static_cyclic=settings.Statc_cyclic;
+        loads.A=settings.Type_Degradation;
+        
+        
         if strcmp(element.type{i,1},'Sand')
             reductionfactor_PU= 1/pile.Reduction_ult_sand.PU;
             reductionfactor_MU= 1/pile.Reduction_ult_sand.MU;
@@ -432,13 +437,41 @@ for i=1:nelem %through all elements
         for top_bottom = 1:2
             % -------- Determination of normalized ultimate values.
 
+             % -------- Determination of normalized ultimate values.
+            pu_static = element.PISA_param(i,1+top_bottom); 
+            mu_static =  element.PISA_param(i,8+top_bottom);
+			HBu_static = element.PISA_param(i,16);  
+            MBu_static = element.PISA_param(i,20);
+            % -------- Saving the computed values
             
-            pu = element.PISA_param(i,1+top_bottom)*reductionfactor_PU;
+            element.heqv(i,top_bottom) = -element.level(i,top_bottom);
+            
+            if strcmp(loads.static_cyclic,'cyclic')
+                if strcmp(loads.A,'API')
+                    cyclic    =   0.9; % acc. API
+                    Cyclic_Degradation=cyclic/max(0.9 , 3.0 - 0.8*element.heqv(i,top_bottom)/pile.diameter); % Ratio between Cyclic and static in API
+                    Cyclic_Degradation_clay=0.72;
+                elseif strcmp(loads.A,'TUHH')
+                    cyclic =   min(0.343*element.heqv(i,top_bottom)/pile.diameter,0.9);  % for more than 100 load cycles, acc. EA-Piles (p.443, Equ. D3.6)
+                    Cyclic_Degradation=cyclic/max(0.9 , 3.0 - 0.8*element.heqv(i,top_bottom)/pile.diameter); % Ratio between Cyclic and static in API
+                    Cyclic_Degradation_clay=0.72;
+                elseif strcmp(loads.A,'P_NGI')
+                    Cyclic_Degradation = element.cyclic_ult(i);
+                    Cyclic_Degradation_clay = element.cyclic_ult(i);
+                end
+			elseif strcmp(loads.static_cyclic,'static')
+            Cyclic_Degradation=1;
+			Cyclic_Degradation_clay=1;
+            end            
+            
             
             if strcmp(element.type{i,1},'Sand')
+            pu = element.PISA_param(i,1+top_bottom)*reductionfactor_PU*Cyclic_Degradation;     
             mu =  element.PISA_param(i,8+top_bottom);
             else
-            mu =  element.PISA_param(i,8+top_bottom)* reductionfactor_MU;    
+                
+            pu = element.PISA_param(i,1+top_bottom)*reductionfactor_PU*Cyclic_Degradation_clay;    
+            mu =  element.PISA_param(i,8+top_bottom)* reductionfactor_MU*Cyclic_Degradation_clay;    
             end 
 			HBu = element.PISA_param(i,16)*reductionfactor_PU;  
             MBu = element.PISA_param(i,20)*reductionfactor_MU;
@@ -448,6 +481,16 @@ for i=1:nelem %through all elements
             element.HBu(i,top_bottom) = HBu;
             element.MBu(i,top_bottom) = MBu;
             element.heqv(i,top_bottom) = -element.level(i,top_bottom);
+            
+   
+            
+            %%%% save the ultimate static resistance of the curves as welL for the
+			element.pu_static(i,top_bottom) = pu_static;
+            element.mu_static(i,top_bottom) = mu_static;
+            element.HBu_static(i,top_bottom) = HBu_static;
+            element.MBu_static(i,top_bottom) = MBu_static;           
+
+            
             
             % switch in order to turn on/off Georgiadis approach
             if settings.Georgiadis == 1     % Georgiadis is turn on
