@@ -74,7 +74,7 @@ mysqlstr_ini        = ['INSERT INTO ',settings.db_table,' (Unit_name,Cons_name,P
            c(r)=temp(3);
         end
         New.soil_type{j} = Input.SoilType{index(j),1};
-        database_str = [mysqlstr_ini,'''',b{1},''',''',a{1},''',''',New.project{index(j)},''',''',Input.Location_name{1,2},''',',num2str(New.revision),',',c{1},',',num2str(element.level(j,1)),',',num2str(pile.(char(Input.ModelsSpil(Geo))).length_start(1)),',',num2str(pile.(char(Input.ModelsSpil(Geo))).diameter(1)),''];
+        database_str = [mysqlstr_ini,'''',b{1},''',''',a{1},''',''',New.project{index(j)},''',',Input.Location_name(1,,',',num2str(New.revision),',',c{1},',',num2str(element.level(j,1)),',',num2str(pile.(char(Input.ModelsSpil(Geo))).length_start(1)),',',num2str(pile.(char(Input.ModelsSpil(Geo))).diameter(1)),''];
         %strcat(New.project{index(j)},'_',num2str(j))
         for ii = 1:16
             database_str = [database_str,',',num2str(element_clean(j,ii))];
