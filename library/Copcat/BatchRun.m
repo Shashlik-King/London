@@ -12,7 +12,7 @@ for Geo = 1:size(CallModels,2)    % Run over the number of plaxis model
         if PYcreator == 0  % Pile response analysis 
             if strcmp(calibration.involvment,'def') || strcmp(calibration.involvment,'mom') || strcmp(calibration.involvment,'def_mom')  || strcmp(calibration.involvment,'def_mom')  || strcmp(calibration.involvment,'def_mom_defmud')  || strcmp(calibration.involvment,'def_defmud')
                 Nrun_forward            = Nrun_forward+1;
-                [results,DB_output,Global_Data(Geo).output_COPCAT.(calibration.level{level}).output]     = run_COSPIN_deflection_excel(CallModels{Geo},Weight,PLAX.(CallModels{Geo}).(calibration.level{level}),PYcreator,variable,loadcase.(CallModels{Geo}).(calibration.level{level}),object_layers,scour.(CallModels{Geo}), soil.(CallModels{Geo}), pile.(CallModels{Geo}), loads.(CallModels{Geo}), settings.(CallModels{Geo}),PYcreator_stiff,var_name,constant,con_name,Database,Apply_Direct_springs,txt_file_output);
+                [results,DB_output,Global_Data(Geo).output_COPCAT.(calibration.level{level}).output,element]     = run_COSPIN_deflection_excel(CallModels{Geo},Weight,PLAX.(CallModels{Geo}).(calibration.level{level}),PYcreator,variable,loadcase.(CallModels{Geo}).(calibration.level{level}),object_layers,scour.(CallModels{Geo}), soil.(CallModels{Geo}), pile.(CallModels{Geo}), loads.(CallModels{Geo}), settings.(CallModels{Geo}),PYcreator_stiff,var_name,constant,con_name,Database,Apply_Direct_springs,txt_file_output);
             else
                 results.shear           = 0;
                 results.moment          = 0;
@@ -37,6 +37,9 @@ for Geo = 1:size(CallModels,2)    % Run over the number of plaxis model
             model(Geo).result(level).displacement       = results.displacement;
         end
     end
+    if isequal(Input.Write_PISA_param(1,2),{1})
+        DB_write_PISA_param(DB_output,Input,spring_type,soil,pile,element,Geo);
+    end
 end
 
 if  PYcreator == 0
@@ -57,9 +60,8 @@ end
 % MySQL DB Output
 if PlotSwitch && Input.Database_update{1,2}
     DB_write(DB_output,Input,spring_type);
-    
+    %DB_write_PISA_param(DB_output,Input,spring_type,soil,pile,element);
     %%%% Write the PISA Fianl Parameters
-    
     
 else
     disp('No update of the Database chosen.')

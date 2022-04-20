@@ -1,4 +1,4 @@
-function [results,DB_output,output_COPCAT] = run_COSPIN_deflection_excel(Location,Weight,PLAX,PYcreator,variable,loadcase,object_layers,scour,soil,pile,loads,settings,PYcreator_stiff,var_name,constant,con_name,Database,Apply_Direct_springs,txt_file_output)
+function [results,DB_output,output_COPCAT,element] = run_COSPIN_deflection_excel(Location,Weight,PLAX,PYcreator,variable,loadcase,object_layers,scour,soil,pile,loads,settings,PYcreator_stiff,var_name,constant,con_name,Database,Apply_Direct_springs,txt_file_output)
 addpath (genpath('library')); % make sure all the functions are available
 %% For All Locations
 ID = Location;				 

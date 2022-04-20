@@ -60,7 +60,8 @@ Range = {'Calibration' 'B3:C3'
 'Static_cyclic' 'B58:C58'
 'Cyclic_method' 'B59:C59'
 'Toe_springs'  'B60:C60'
-'Apply_Moment_springs'  'B61:C61' 
+'Apply_Moment_springs'  'B61:C61'
+'Write_PISA_param' 'B64:C64'
 };
 
 [~,~,Input_raw] = xlsread(Files{1,1},Sheets{1,1});

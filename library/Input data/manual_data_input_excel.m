@@ -102,14 +102,16 @@ if (any(isnan(soil.degradation.Cyclic_Ult)))
 end 
 
 
-
+soil.Dr = num(3:3+n_layers-1,44); % 
 
 
 
 %%%%%%%%Fake   PNGI 
 
-soil.Dr=soil.G0;
-soil.Dr(:)=0.1;
+% soil.Dr=soil.G0;
+% soil.Dr(:)=0.1;
+
+
 
 % [num,txt] = xlsread('manual_data_input.xlsx','Control Panel', 'C21'); % FKMV
 % soil.soiltype = txt; % FKMV
@@ -134,7 +136,6 @@ if strcmp(Input.Cyclic_style{1,2} , 'Zhang') && Input.Cyclic_run{1,2} == 1 && In
     soil.degradation.min_CSR= num(3:3+n_layers-1,48); % [m]
 
 else
-    
     C    = cell(length(soil.model_py),1);
     C(:) = {'NO Contour assigend '};
 
@@ -142,3 +143,13 @@ else
 	soil.degradation.Ns     = ones(length(soil.model_py),1); % [m]
     soil.degradation.min_CSR= ones(length(soil.model_py),1); % [m]
 end
+
+soil.batch   = txt(6:6+n_layers-1,46); % 
+soil.Ns      = num(3:3+n_layers-1,47); % 
+soil.min_CSR = num(3:3+n_layers-1,48); % 
+soil.SigmaV  = num(3:3+n_layers-1,49); % 
+soil.CSR     = num(3:3+n_layers-1,50); % 
+soil.Neq     = num(3:3+n_layers-1,51); % 
+soil.CF_OCR  = num(3:3+n_layers-1,52); % 
+soil.CF_Dr   = num(3:3+n_layers-1,53); % 
+soil.ASR     = num(3:3+n_layers-1,54); % 
