@@ -129,16 +129,19 @@ else
 end
 
 if strcmp(Input.Cyclic_style{1,2} , 'Zhang') && Input.Cyclic_run{1,2} == 1 && Input.Markov_run{1,2} == 1
-	soil.degradation.batch  = txt(6:6+n_layers-1,46); % [m]
-	soil.degradation.Ns     = num(3:3+n_layers-1,47); % [m]
-    soil.degradation.min_CSR= num(3:3+n_layers-1,48); % [m]
-
+	soil.degradation.batch  = txt(6:6+n_layers-1,46); % [-]
+	soil.degradation.Ns     = num(3:3+n_layers-1,47); % [-]
+    soil.degradation.min_CSR= num(3:3+n_layers-1,48); % [-]
+    soil.degradation.CF_DR= num(3:3+n_layers-1,49); % [-]
+    soil.degradation.CF_OCR= num(3:3+n_layers-1,50); % [-]
 else
     
     C    = cell(length(soil.model_py),1);
     C(:) = {'NO Contour assigend '};
 
 	soil.degradation.batch  = C; % [m]
-	soil.degradation.Ns     = ones(length(soil.model_py),1); % [m]
-    soil.degradation.min_CSR= ones(length(soil.model_py),1); % [m]
+	soil.degradation.Ns     = ones(length(soil.model_py),1); % [-]
+    soil.degradation.min_CSR= ones(length(soil.model_py),1); % [-]
+    soil.degradation.CF_DR= ones(length(soil.model_py),1); % [-]
+    soil.degradation.CF_OCR= ones(length(soil.model_py),1); % [-]
 end

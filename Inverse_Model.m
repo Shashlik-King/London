@@ -1,6 +1,6 @@
 %% Inverse analysis run
 % description of the function is found in the Function manual
-clc; clear all; close all; delete(gcp('nocreate'))
+clc; clear all; close all; beep off; delete(gcp('nocreate'))
 
 %%Version number is automatically updated by release pipeline
 CopcatVersion           = 'DevelopmentVersion';
@@ -136,7 +136,7 @@ UB = cell2mat(UB);
     
 %% Calculations
 [variable]      = Ucode2014(Inversemode,loadcase,object_layers,PYcreator,CallModels,Weight,PLAX,calibration,scour,soil,pile,loads,settings,PYcreator_stiff,var_name,focus,constant,con_name,spring_type,Stratigraphy,Database,start,LB,UB,Layered_wise_calibration,Apply_Direct_springs,Input);
-General_error   = BatchRun(variable,loadcase,object_layers,PYcreator,CallModels,Weight,PLAX,calibration,scour,soil,pile,loads,settings,1,PYcreator_stiff,var_name,focus,constant,con_name,spring_type,Stratigraphy,Database,Apply_Direct_springs,txt_file_output,Input);
+% General_error   = BatchRun(variable,loadcase,object_layers,PYcreator,CallModels,Weight,PLAX,calibration,scour,soil,pile,loads,settings,1,PYcreator_stiff,var_name,focus,constant,con_name,spring_type,Stratigraphy,Database,Apply_Direct_springs,txt_file_output,Input);
 
 if Cyclic_concept.Main
     PlotSwitch=0;   

@@ -12,27 +12,13 @@ for Geo=1:size(CallModels,2)    % Run over the number of plaxis model
     for i = 1:size(batch_names,1) % run for loop to load all batches
         CSR_N_axis_all{i,1}     = load(['Plaxisfiles\Batches\CSR_N_axis_',batch_names{i,1},'.mat']);
         gamma_matrix_all{i,1}   = load(['Plaxisfiles\Batches\gamma_matrix_',batch_names{i,1},'.mat']);
-
-        gamma_matrix_all{i,1}.gamma_matrix (1,:) = 0;
-        gamma_matrix_all{i,1}.gamma_matrix ( isnan(gamma_matrix_all{i,1}.gamma_matrix )) = 15;
-        for jj=1:2000
-           % remove any nan value
-             index = find (gamma_matrix_all{i,1}.gamma_matrix(:,jj)>=15);
-             if size(index) >0
-                 gamma_matrix_all{i,1}.gamma_matrix(index(1)+1:2000 ,jj) = 1000;
-             end  
-        end
-        %  Temporary determining the P multiplier from contour data   
-%            multipliers_all{i,1}    = load(['Plaxisfiles\Batches\multipliers_',batch_names{i,1},'.mat']);
-           [multipliers_all{i,1}.batch.p ,multipliers_all{i,1}.batch.y ] =  P_multiplier_extraction ( CSR_N_axis_all{i,:}.CSR_N_axis, gamma_matrix_all{i,1}.gamma_matrix);
-           plot_soil_contours (CSR_N_axis_all{i,1}.CSR_N_axis, gamma_matrix_all{i,1}.gamma_matrix, batch_names{i,1},CallModels{1,1});
+        multipliers_all{i,1}    = load(['Plaxisfiles\Batches\multipliers_',batch_names{i,1},'.mat']);
     end
 
-    %% Change markov matrix - remove NaN and keep and sum up the unique values
+    %% Change markov matrix
     markow.num=Markov.(CallModels{Geo}).num;
 %     unique_markow = unique([markow.num(:,1) , markow.num(:,3)],'rows'); % Make unique Markov matrix
     unique_markow = unique(markow.num(:,1),'rows'); % Make unique Markov matrix
-    unique_markow(isnan(unique_markow(:,1)),:) = [];
     for ii = 1:size(unique_markow(:,1),1)
 %         unique_markow(ii,3) = sum(markow.num((unique_markow(ii,1) == markow.num(:,1) & unique_markow(ii,2) == markow.num(:,3)),5));% accumulate count
         unique_markow(ii,3) = sum(markow.num((unique_markow(ii,1) == markow.num(:,1) ),5));% accumulate count
@@ -41,24 +27,18 @@ for Geo=1:size(CallModels,2)    % Run over the number of plaxis model
     markow.num = [unique_markow(:,1), zeros(size(unique_markow(:,1),1),1) , unique_markow(:,2), zeros(size(unique_markow(:,1),1),1) , unique_markow(:,3)];
     
     %% Initialise
-    loadcase.H = max(markow.num(:,3)/2);
-    loadcase.M = max(-markow.num(1,1)/2);
+    loadcase.H = markow.num(1,3)/2;
+    loadcase.M = -markow.num(1,1)/2;
     multiplier_init  = ones(10000,2);
-    Pu_static = [1,1]; Initialisation_index=1;
-    [initialise_data] = run_COSPIN_utilisation_Zhang(CallModels{Geo},Weight,PLAX.(CallModels{Geo}).(calibration.level{1}),PYcreator,variable,loadcase,object_layers,scour.(CallModels{Geo}), soil.(CallModels{Geo}), pile.(CallModels{Geo}), loads.(CallModels{Geo}), settings.(CallModels{Geo}),PYcreator_stiff,var_name,constant,con_name,Database,Apply_Direct_springs,Input,multiplier_init,Initialisation_index,Pu_static);
+    [initialise_data] = run_COSPIN_utilisation_Zhang(CallModels{Geo},Weight,PLAX.(CallModels{Geo}).(calibration.level{1}),PYcreator,variable,loadcase,object_layers,scour.(CallModels{Geo}), soil.(CallModels{Geo}), pile.(CallModels{Geo}), loads.(CallModels{Geo}), settings.(CallModels{Geo}),PYcreator_stiff,var_name,constant,con_name,Database,Apply_Direct_springs,Input,multiplier_init);
     utilisation(1:size(markow.num,1),3) = {ones(size(initialise_data.utilisation,1),1)};
     multiplier(1:size(markow.num,1),1)  = {ones(size(initialise_data.utilisation,1),6)};
     N_eq(1:size(markow.num,1),1)        = {ones(size(initialise_data.utilisation,1),3)};
+%     N_eq{1,1}(:,1)                      =  markow.num(1,5); %MDGI: initalization of Neq for the first parcel itr 0
     N_eq_new(1:size(markow.num,1),1)    = {ones(size(initialise_data.utilisation,1),3)};
-    gamma(1:size(markow.num,1),1)       = {zeros(size(initialise_data.utilisation,1),3)};
-    utilisation_failure                 = zeros(size(initialise_data.utilisation,1),1);
+    gamma(1:size(markow.num,1),1)       = {ones(size(initialise_data.utilisation,1),3)};
+    utilisation_counter                 = zeros(size(initialise_data.utilisation,1),1);
     
-    % to save the Neq=1 spring for further normalization
-    Initialisation_index=0;% Just for the first level and first iteration
-    Pu_static =[];
-    for jj = 1:size(initialise_data.utilisation,1) 
-          Pu_static = [Pu_static ; initialise_data.utilisation(jj,5) , (multipliers_all{strcmp(initialise_data.element.batch(jj),batch_names),1}.batch.p(1,1)) .* ( initialise_data.element.CF_DR(jj)*initialise_data.element.CF_OCR(jj) )] ;
-    end
     %% Markov run
     if Cyclic_concept.Markov_switch==1
         for level=1:size(markow.num,1)   % Run over the  load level of each models 
@@ -67,198 +47,140 @@ for Geo=1:size(CallModels,2)    % Run over the number of plaxis model
                 % 0th iteration
                 loadcase.H = markow.num(level,3)/2;
                 loadcase.M = -markow.num(level,1)/2;
-                [results] = run_COSPIN_utilisation_Zhang(CallModels{Geo},Weight,PLAX.(CallModels{Geo}).(calibration.level{1}),PYcreator,variable,loadcase,object_layers,scour.(CallModels{Geo}), soil.(CallModels{Geo}), pile.(CallModels{Geo}), loads.(CallModels{Geo}), settings.(CallModels{Geo}),PYcreator_stiff,var_name,constant,con_name,Database,Apply_Direct_springs,Input,multiplier{level,1}(:,1:2), Initialisation_index,Pu_static);
-                disp(strcat('Calculation for parcel no.' , num2str(level), ', Itr. 1'))
+                [results] = run_COSPIN_utilisation_Zhang(CallModels{Geo},Weight,PLAX.(CallModels{Geo}).(calibration.level{1}),PYcreator,variable,loadcase,object_layers,scour.(CallModels{Geo}), soil.(CallModels{Geo}), pile.(CallModels{Geo}), loads.(CallModels{Geo}), settings.(CallModels{Geo}),PYcreator_stiff,var_name,constant,con_name,Database,Apply_Direct_springs,Input,multiplier{level,1}(:,1:2));
+                disp(strcat('Calculation for parcel no.' , num2str(level)))
                 utilisation{level,1} = results.utilisation;
                 for jj = 1:size(results.utilisation,1)
-                    CSR_N_axis           = CSR_N_axis_all{strcmp(results.element.batch(jj),batch_names),1}.CSR_N_axis ;
+                    CSR_N_axis          = CSR_N_axis_all{strcmp(results.element.batch(jj),batch_names),1}.CSR_N_axis ;
                     gamma_matrix        = gamma_matrix_all{strcmp(results.element.batch(jj),batch_names),1}.gamma_matrix;
-                    multipliers_graph   = multipliers_all{strcmp(results.element.batch(jj),batch_names),1}.batch;                      
-                    % applying correction factor
-                    CSR_N_axis(:,2)  = CSR_N_axis(:,2) .* ( results.element.CF_DR(jj)*results.element.CF_OCR(jj) ) ;
-                    multipliers_graph.p(1,:) = multipliers_graph.p(1,:) .* ( results.element.CF_DR(jj)*results.element.CF_OCR(jj) ) ;
-                    results.element.min_CSR(jj) =  results.element.min_CSR(jj) .* ( results.element.CF_DR(jj)*results.element.CF_OCR(jj) ) ;
-                    
+                    multipliers_graph   = multipliers_all{strcmp(results.element.batch(jj),batch_names),1}.batch;                    
                     if utilisation{level,1}(jj,3) > results.element.min_CSR(jj)
-%                         [gamma{level,1}(jj,2)]  = retrive_gamma(markow.num(level,5),utilisation{level,1}(jj,3),CSR_N_axis,gamma_matrix);
-                            [gamma{level,1}(jj,1)] = retrive_gamma(markow.num(level,5),utilisation{level,1}(jj,3),CSR_N_axis,gamma_matrix);             
-                             N_eq{level,1}(jj,1) = markow.num(1,5);
-                             if N_eq{level,1}(jj,1)>=10000; N_eq{level,1}(jj,1)=10000; end
-                            [multiplier{level,1}(jj,1), multiplier{level,1}(jj,2)] = springs_modifier(multipliers_graph, N_eq{level,1}(jj,1));
+                        if utilisation_counter(jj) == 0
+                            [gamma{level,1}(jj,2)]  = retrive_gamma(markow.num(level,5),utilisation{level,1}(jj,3),CSR_N_axis,gamma_matrix);
+                            utilisation_counter(jj) = 1;
+                        else
+                        [gamma{level,1}(jj,1)] = retrive_gamma(markow.num(level,5),utilisation{level,1}(jj,3),CSR_N_axis,gamma_matrix);
+                        [multiplier{level,1}(jj,1), multiplier{level,1}(jj,2)] = springs_modifier(multipliers_graph, 1, 1, N_eq{level,1}(jj,1));
+                        end
                     end
                 end
                 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
                 % 1st iteration
-                % it is copy of 0 iteration
-                multiplier{level,1}(:,3)= multiplier{level,1}(:,1);
-                multiplier{level,1}(:,4)= multiplier{level,1}(:,2);
-                utilisation{level,2} = utilisation{level,1};
-                gamma{level,1}(:,2) = gamma{level,1}(:,1);
-                N_eq{level,1}(:,2) = N_eq{level,1}(:,1);
-
-%                 loadcase.H = markow.num(level,3)/2;
-%                 loadcase.M = -markow.num(level,1)/2;
-%                 [results] = run_COSPIN_utilisation_Zhang(CallModels{Geo},Weight,PLAX.(CallModels{Geo}).(calibration.level{1}),PYcreator,variable,loadcase,object_layers,scour.(CallModels{Geo}), soil.(CallModels{Geo}), pile.(CallModels{Geo}), loads.(CallModels{Geo}), settings.(CallModels{Geo}),PYcreator_stiff,var_name,constant,con_name,Database,Apply_Direct_springs,Input,multiplier{level,1}(:,3:4));
-%                 disp(strcat('Calculation for parcel no.' , num2str(level)))
-%                 utilisation{level,2} = results.utilisation;
-%                 for jj = 1:size(results.utilisation,1)
-%                     CSR_N_axis     = CSR_N_axis_all{strcmp(results.element.batch(jj),batch_names),1}.CSR_N_axis ;
-%                     gamma_matrix   = gamma_matrix_all{strcmp(results.element.batch(jj),batch_names),1}.gamma_matrix;
-%                     multipliers_graph   = multipliers_all{strcmp(results.element.batch(jj),batch_names),1}.batch;   
-%                     if utilisation{level,2}(jj,3) > results.element.min_CSR(jj)
-%                         if utilisation_counter(jj) == 0
-%                             [gamma{level,1}(jj,2)]  = retrive_gamma(markow.num(level,5),utilisation{level,2}(jj,3),CSR_N_axis,gamma_matrix);
-%                             [N_eq_new{level,1}(jj,1),gamma{level,1}(jj,2),N_eq{level,1}(jj,1)]  = N_eq_calc(0,gamma{level,1}(jj,1),utilisation{level,1}(jj,3),markow.num(level,5),CSR_N_axis,gamma_matrix);
-%                             [multiplier{level,1}(jj,3), multiplier{level,1}(jj,4)] = springs_modifier(multipliers_graph, N_eq{level,1}(jj,1));
-%                         end
-%                     end
-%                 end
+                loadcase.H = markow.num(level,3)/2;
+                loadcase.M = -markow.num(level,1)/2;
+                [results] = run_COSPIN_utilisation_Zhang(CallModels{Geo},Weight,PLAX.(CallModels{Geo}).(calibration.level{1}),PYcreator,variable,loadcase,object_layers,scour.(CallModels{Geo}), soil.(CallModels{Geo}), pile.(CallModels{Geo}), loads.(CallModels{Geo}), settings.(CallModels{Geo}),PYcreator_stiff,var_name,constant,con_name,Database,Apply_Direct_springs,Input,multiplier{level,1}(:,3:4));
+                disp(strcat('Calculation for parcel no.' , num2str(level)))
+                utilisation{level,2} = results.utilisation;
+                for jj = 1:size(results.utilisation,1)
+                    CSR_N_axis     = CSR_N_axis_all{strcmp(results.element.batch(jj),batch_names),1}.CSR_N_axis ;
+                    gamma_matrix   = gamma_matrix_all{strcmp(results.element.batch(jj),batch_names),1}.gamma_matrix;
+                    multipliers_graph   = multipliers_all{strcmp(results.element.batch(jj),batch_names),1}.batch;   
+                    if utilisation{level,2}(jj,3) > results.element.min_CSR(jj)
+                        if utilisation_counter(jj) == 0
+                            [gamma{level,1}(jj,2)]  = retrive_gamma(markow.num(level,5),utilisation{level,2}(jj,3),CSR_N_axis,gamma_matrix);
+                            utilisation_counter(jj) = 1;
+                        else
+                            [N_eq_new{level,1}(jj,1),gamma{level,1}(jj,2),N_eq{level,1}(jj,1)]  = N_eq_calc(0,gamma{level,1}(jj,1),utilisation{level,1}(jj,3),markow.num(level,5),CSR_N_axis,gamma_matrix);
+                            [multiplier{level,1}(jj,3), multiplier{level,1}(jj,4)] = springs_modifier(multipliers_graph, N_eq{level,1}(jj,1));
+                        end
+                    end
+                end
                 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
                 % 2nd iteration
                 loadcase.H = markow.num(level,3)/2;
                 loadcase.M = -markow.num(level,1)/2;
-                [results] = run_COSPIN_utilisation_Zhang(CallModels{Geo},Weight,PLAX.(CallModels{Geo}).(calibration.level{1}),PYcreator,variable,loadcase,object_layers,scour.(CallModels{Geo}), soil.(CallModels{Geo}), pile.(CallModels{Geo}), loads.(CallModels{Geo}), settings.(CallModels{Geo}),PYcreator_stiff,var_name,constant,con_name,Database,Apply_Direct_springs,Input,multiplier{level,1}(:,3:4), Initialisation_index,Pu_static);
-                disp(strcat('Calculation for parcel no.' , num2str(level), ', Itr. 2'))
+                [results] = run_COSPIN_utilisation_Zhang(CallModels{Geo},Weight,PLAX.(CallModels{Geo}).(calibration.level{1}),PYcreator,variable,loadcase,object_layers,scour.(CallModels{Geo}), soil.(CallModels{Geo}), pile.(CallModels{Geo}), loads.(CallModels{Geo}), settings.(CallModels{Geo}),PYcreator_stiff,var_name,constant,con_name,Database,Apply_Direct_springs,Input,multiplier{level,1}(:,5:6));
+                disp(strcat('Calculation for parcel no.' , num2str(level)))
                 utilisation{level,3} = results.utilisation;
                 for jj = 1:size(results.utilisation,1)
                     CSR_N_axis     = CSR_N_axis_all{strcmp(results.element.batch(jj),batch_names),1}.CSR_N_axis ;
                     gamma_matrix   = gamma_matrix_all{strcmp(results.element.batch(jj),batch_names),1}.gamma_matrix;      
                     multipliers_graph   = multipliers_all{strcmp(results.element.batch(jj),batch_names),1}.batch;   
-                     % applying correction factor
-                    CSR_N_axis(:,2)  = CSR_N_axis(:,2) .* ( results.element.CF_DR(jj)*results.element.CF_OCR(jj) ) ;
-                    multipliers_graph.p(1,:) = multipliers_graph.p(1,:) .* ( results.element.CF_DR(jj)*results.element.CF_OCR(jj) ) ;
-                    results.element.min_CSR(jj) =  results.element.min_CSR(jj) .* ( results.element.CF_DR(jj)*results.element.CF_OCR(jj) ) ;
-                    
                     if utilisation{level,3}(jj,3) > results.element.min_CSR(jj)
-                            [gamma{level,1}(jj,3)]  = retrive_gamma(markow.num(level,5),utilisation{level,3}(jj,3),CSR_N_axis,gamma_matrix);
-                            if  gamma{level,1}(jj,3)>=15 ;  utilisation_failure(jj)=1; end
-                            N_eq{level,1}(jj,3)     = markow.num(1,5);
-                            if N_eq{level,1}(jj,3)>=10000; N_eq{level,1}(jj,3)=10000; end
-                            [multiplier{level,1}(jj,5), multiplier{level,1}(jj,6)] = springs_modifier(multipliers_graph, N_eq{level,1}(jj,3));
+                        if utilisation_counter(jj) == 0
+                            [gamma{level,1}(jj,2)]  = retrive_gamma(markow.num(level,5),utilisation{level,3}(jj,3),CSR_N_axis,gamma_matrix);
+                            utilisation_counter(jj) = 1;
+                        else                        
+                        [N_eq_new{level,1}(jj,1),gamma{level,1}(jj,3),N_eq{level,1}(jj,1)]  = N_eq_calc(0,gamma{level,1}(jj,2),utilisation{level,1}(jj,3),markow.num(level,5),CSR_N_axis,gamma_matrix);
+                        [multiplier{level,1}(jj,5), multiplier{level,1}(jj,6)] = springs_modifier(multipliers_graph, N_eq{level,1}(jj,1));
+                        end
                     end
                 end
-                
-                
             else
                 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
                 % 2nd parcel and beyond
                 % 0th iteration
                 loadcase.H = markow.num(level,3)/2;
                 loadcase.M = -markow.num(level,1)/2;
-                [results] = run_COSPIN_utilisation_Zhang(CallModels{Geo},Weight,PLAX.(CallModels{Geo}).(calibration.level{1}),PYcreator,variable,loadcase,object_layers,scour.(CallModels{Geo}), soil.(CallModels{Geo}), pile.(CallModels{Geo}), loads.(CallModels{Geo}), settings.(CallModels{Geo}),PYcreator_stiff,var_name,constant,con_name,Database,Apply_Direct_springs,Input,multiplier{level-1,1}(:,5:6), Initialisation_index,Pu_static);
-                disp(strcat('Calculation for parcel no.' , num2str(level), ', Itr. 0'))
+                [results] = run_COSPIN_utilisation_Zhang(CallModels{Geo},Weight,PLAX.(CallModels{Geo}).(calibration.level{1}),PYcreator,variable,loadcase,object_layers,scour.(CallModels{Geo}), soil.(CallModels{Geo}), pile.(CallModels{Geo}), loads.(CallModels{Geo}), settings.(CallModels{Geo}),PYcreator_stiff,var_name,constant,con_name,Database,Apply_Direct_springs,Input,multiplier{level-1,1}(:,5:6));
+                disp(strcat('Calculation for parcel no.' , num2str(level)))
                 utilisation{level,1} = results.utilisation;
                 for jj = 1:size(results.utilisation,1)
                     CSR_N_axis          = CSR_N_axis_all{strcmp(results.element.batch(jj),batch_names),1}.CSR_N_axis ;
                     gamma_matrix        = gamma_matrix_all{strcmp(results.element.batch(jj),batch_names),1}.gamma_matrix;
-                    multipliers_graph   = multipliers_all{strcmp(results.element.batch(jj),batch_names),1}.batch; 
-                    % applying correction factor
-                    CSR_N_axis(:,2)  = CSR_N_axis(:,2) .* ( results.element.CF_DR(jj)*results.element.CF_OCR(jj) ) ;
-                    multipliers_graph.p(1,:) = multipliers_graph.p(1,:) .* ( results.element.CF_DR(jj)*results.element.CF_OCR(jj) ) ;
-                    results.element.min_CSR(jj) =  results.element.min_CSR(jj) .* ( results.element.CF_DR(jj)*results.element.CF_OCR(jj) ) ;
-                    
-                    if utilisation_failure(jj)==0
-                        if utilisation{level,1}(jj,3) > results.element.min_CSR(jj)
-    %                             [gamma{level,1}(jj,1)]  = retrive_gamma(markow.num(level,5),utilisation{level,1}(jj,3),CSR_N_axis,gamma_matrix);
-                                [N_eq_new{level,1}(jj,1),gamma{level,1}(jj,1),N_eq{level,1}(jj,1)]  = N_eq_calc(utilisation{level - 1,3}(jj,3),gamma{level-1,1}(jj,3),utilisation{level,1}(jj,3),markow.num(level,5),CSR_N_axis,gamma_matrix); 
-                                [gamma{level,1}(jj,1)]  = retrive_gamma(N_eq{level,1}(jj,1),utilisation{level,1}(jj,3),CSR_N_axis,gamma_matrix); % gamma for new Neq
-                                [multiplier{level,1}(jj,1), multiplier{level,1}(jj,2)] = springs_modifier(multipliers_graph, N_eq{level,1}(jj,1));
-%                                 if  gamma{level,1}(jj,1)>=15 ;
-%                                 utilisation_failure(jj)=1; end % it could
-%                                 be that this spring wont fail in the next
-%                                 step
+                    multipliers_graph   = multipliers_all{strcmp(results.element.batch(jj),batch_names),1}.batch;                   
+                    if utilisation{level,1}(jj,3) > results.element.min_CSR(jj)
+                        if utilisation_counter(jj) == 0
+                            [gamma{level,1}(jj,1)]  = retrive_gamma(markow.num(level,5),utilisation{level,1}(jj,3),CSR_N_axis,gamma_matrix);
+                            utilisation_counter(jj) = 1;
+                        else                        
+                        [N_eq_new{level,1}(jj,1),gamma{level,1}(jj,1),N_eq{level,1}(jj,1)]  = N_eq_calc(utilisation{level - 1,1}(jj,3),gamma{level-1,1}(jj,3),utilisation{level,1}(jj,3),markow.num(level,5),CSR_N_axis,gamma_matrix); 
+                        [multiplier{level,1}(jj,1), multiplier{level,1}(jj,2)] = springs_modifier(multipliers_graph, N_eq{level,1}(jj,1));
                         end
-                    else % sprig is already at failure 
-                          multiplier{level,1}(jj,1) = multiplier{level-1,1}(jj,5);
-                          multiplier{level,1}(jj,2) = multiplier{level-1,1}(jj,6);                        
-                          gamma{level,1}(jj,1) = gamma{level-1,1}(jj,3);
-                          N_eq{level,1}(jj,1) =  N_eq{level-1,1}(jj,3);
-                    end    
-                          
+                    end
                 end
                 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 
                 % 1st iteration
                 loadcase.H = markow.num(level,3)/2;
                 loadcase.M = -markow.num(level,1)/2;
-                [results] = run_COSPIN_utilisation_Zhang(CallModels{Geo},Weight,PLAX.(CallModels{Geo}).(calibration.level{1}),PYcreator,variable,loadcase,object_layers,scour.(CallModels{Geo}), soil.(CallModels{Geo}), pile.(CallModels{Geo}), loads.(CallModels{Geo}), settings.(CallModels{Geo}),PYcreator_stiff,var_name,constant,con_name,Database,Apply_Direct_springs,Input,multiplier{level,1}(:,1:2), Initialisation_index,Pu_static);
-                disp(strcat('Calculation for parcel no.' , num2str(level), ', Itr. 1'))
+                [results] = run_COSPIN_utilisation_Zhang(CallModels{Geo},Weight,PLAX.(CallModels{Geo}).(calibration.level{1}),PYcreator,variable,loadcase,object_layers,scour.(CallModels{Geo}), soil.(CallModels{Geo}), pile.(CallModels{Geo}), loads.(CallModels{Geo}), settings.(CallModels{Geo}),PYcreator_stiff,var_name,constant,con_name,Database,Apply_Direct_springs,Input,multiplier{level,1}(:,1:2));
+                disp(strcat('Calculation for parcel no.' , num2str(level)))
                 utilisation{level,2} = results.utilisation;
                 for jj = 1:size(results.utilisation,1)
                     CSR_N_axis     = CSR_N_axis_all{strcmp(results.element.batch(jj),batch_names),1}.CSR_N_axis ;
                     gamma_matrix   = gamma_matrix_all{strcmp(results.element.batch(jj),batch_names),1}.gamma_matrix; 
-                    multipliers_graph   = multipliers_all{strcmp(results.element.batch(jj),batch_names),1}.batch; 
-                     % applying correction factor
-                    CSR_N_axis(:,2)  = CSR_N_axis(:,2) .* ( results.element.CF_DR(jj)*results.element.CF_OCR(jj) ) ;
-                    multipliers_graph.p(1,:) = multipliers_graph.p(1,:) .* ( results.element.CF_DR(jj)*results.element.CF_OCR(jj) ) ;
-                    results.element.min_CSR(jj) =  results.element.min_CSR(jj) .* ( results.element.CF_DR(jj)*results.element.CF_OCR(jj) ) ;
-                    
-                     if utilisation_failure(jj)==0
-                        if utilisation{level,2}(jj,3) > results.element.min_CSR(jj)
-
-    %                             [gamma{level,1}(jj,1)]  = retrive_gamma(markow.num(level,5),utilisation{level,1}(jj,3),CSR_N_axis,gamma_matrix);
-                                [N_eq{level,1}(jj,3),gamma{level,1}(jj,3),N_eq{level,1}(jj,2)]  = N_eq_calc(utilisation{level - 1,3}(jj,3),gamma{level-1,1}(jj,3),utilisation{level,2}(jj,3),markow.num(level,5),CSR_N_axis,gamma_matrix); 
-
-                                [gamma{level,1}(jj,2)]  = retrive_gamma(N_eq{level,1}(jj,2),utilisation{level,2}(jj,3),CSR_N_axis,gamma_matrix); % gamma for new Neq
-                                [gamma{level,1}(jj,3)]  = retrive_gamma(N_eq{level,1}(jj,3),utilisation{level,2}(jj,3),CSR_N_axis,gamma_matrix); % gamma for new Neq + delta N
-                                
-                                if  gamma{level,1}(jj,3)>=15 ;  utilisation_failure(jj)=1; end
-                                
-                                [multiplier{level,1}(jj,3), multiplier{level,1}(jj,4)] = springs_modifier(multipliers_graph, N_eq{level,1}(jj,2));
-                                % Multiplier this time with tht delta_N from
-                                %from this load parcel
-                                [multiplier{level,1}(jj,5), multiplier{level,1}(jj,6)] = springs_modifier(multipliers_graph, N_eq{level,1}(jj,3));
-
+                    multipliers_graph   = multipliers_all{strcmp(results.element.batch(jj),batch_names),1}.batch;                                           
+                    if utilisation{level,2}(jj,3) > results.element.min_CSR(jj)
+                        if utilisation_counter(jj) == 0
+                            [gamma{level,1}(jj,2)]  = retrive_gamma(markow.num(level,5),utilisation{level,2}(jj,3),CSR_N_axis,gamma_matrix);
+                            utilisation_counter(jj) = 1;
+                        else
+                        [N_eq_new{level,1}(jj,2),gamma{level,1}(jj,2),N_eq{level,1}(jj,2)]  = N_eq_calc(utilisation{level - 1,1}(jj,3),gamma{level,1}(jj,1),utilisation{level,1}(jj,3),markow.num(level,5),CSR_N_axis,gamma_matrix);
+                        [multiplier{level,1}(jj,3), multiplier{level,1}(jj,4)] = springs_modifier(multipliers_graph, N_eq{level,1}(jj,2));
                         end
-                    else % sprig is already at failure 
-                          N_eq{level,1}(jj,2) =  N_eq{level,1}(jj,1);
-                          multiplier{level,1}(jj,3) = multiplier{level,1}(jj,1);
-                          multiplier{level,1}(jj,4) = multiplier{level,1}(jj,2);                           
-                          gamma{level,1}(jj,2) = gamma{level,1}(jj,1);
-                          
-                          N_eq{level,1}(jj,3) =  N_eq{level,1}(jj,2) ;
-                          multiplier{level,1}(jj,5) = multiplier{level,1}(jj,1);
-                          multiplier{level,1}(jj,6) = multiplier{level,1}(jj,2);   
-                           
-                          gamma{level,1}(jj,3) = gamma{level,1}(jj,1);                         
-                     end
+                    end
                 end
                 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 
                 % 2nd iteration
                 loadcase.H = markow.num(level,3)/2;
                 loadcase.M = -markow.num(level,1)/2;
-                [results] = run_COSPIN_utilisation_Zhang(CallModels{Geo},Weight,PLAX.(CallModels{Geo}).(calibration.level{1}),PYcreator,variable,loadcase,object_layers,scour.(CallModels{Geo}), soil.(CallModels{Geo}), pile.(CallModels{Geo}), loads.(CallModels{Geo}), settings.(CallModels{Geo}),PYcreator_stiff,var_name,constant,con_name,Database,Apply_Direct_springs,Input,multiplier{level,1}(:,5:6), Initialisation_index,Pu_static);
-                disp(strcat('Calculation for parcel no.' , num2str(level), ', Itr. 2'))
-                utilisation{level,3}     = results.utilisation;
-%                 N_eq{level,1}(:,3)      = N_eq{level,1}(:,2);
-%                 N_eq_new{level,1}(:,3)  = N_eq_new{level,1}(:,2);
-%                 gamma{level,1}(:,3)     = gamma{level,1}(:,2);
+                [results] = run_COSPIN_utilisation_Zhang(CallModels{Geo},Weight,PLAX.(CallModels{Geo}).(calibration.level{1}),PYcreator,variable,loadcase,object_layers,scour.(CallModels{Geo}), soil.(CallModels{Geo}), pile.(CallModels{Geo}), loads.(CallModels{Geo}), settings.(CallModels{Geo}),PYcreator_stiff,var_name,constant,con_name,Database,Apply_Direct_springs,Input,multiplier{level,1}(:,3:4));
+                disp(strcat('Calculation for parcel no.' , num2str(level)))
+                utilisation{level,3} = results.utilisation;
                 for jj = 1:size(results.utilisation,1)
                     CSR_N_axis     = CSR_N_axis_all{strcmp(results.element.batch(jj),batch_names),1}.CSR_N_axis ;
                     gamma_matrix   = gamma_matrix_all{strcmp(results.element.batch(jj),batch_names),1}.gamma_matrix;   
-                    multipliers_graph   = multipliers_all{strcmp(results.element.batch(jj),batch_names),1}.batch;     
-                    % applying correction factor
-                    CSR_N_axis(:,2)  = CSR_N_axis(:,2) .* ( results.element.CF_DR(jj)*results.element.CF_OCR(jj) ) ;
-                    multipliers_graph.p(1,:) = multipliers_graph.p(1,:) .* ( results.element.CF_DR(jj)*results.element.CF_OCR(jj) ) ;            
-                    results.element.min_CSR(jj) =  results.element.min_CSR(jj) .* ( results.element.CF_DR(jj)*results.element.CF_OCR(jj) ) ;
-                    
+                    multipliers_graph   = multipliers_all{strcmp(results.element.batch(jj),batch_names),1}.batch;                        
                     if utilisation{level,3}(jj,3) > results.element.min_CSR(jj)
-                         [gamma{level,1}(jj,3)]  = retrive_gamma(N_eq{level,1}(jj,3),utilisation{level,3}(jj,3),CSR_N_axis,gamma_matrix); % gamma for new Neq     
-                          if  gamma{level,1}(jj,3)>=15 ;  utilisation_failure(jj)=1; else  utilisation_failure(jj)=0;  end
-                    else
-                          utilisation_failure(jj)=0;
-                          gamma{level,1}(jj,3)=0;
+                        if utilisation_counter(jj) == 0
+                            [gamma{level,1}(jj,3)]  = retrive_gamma(markow.num(level,5),utilisation{level,3}(jj,3),CSR_N_axis,gamma_matrix);
+                            utilisation_counter(jj) = 1;
+                        else                        
+                        [N_eq_new{level,1}(jj,3),gamma{level,1}(jj,3),N_eq{level,1}(jj,3)]  = N_eq_calc(utilisation{level - 1,1}(jj,3),gamma{level,1}(jj,2),utilisation{level,1}(jj,3),markow.num(level,5),CSR_N_axis,gamma_matrix);
+                        [multiplier{level,1}(jj,5), multiplier{level,1}(jj,6)] = springs_modifier(multipliers_graph, N_eq{level,1}(jj,3));
+                        end
                     end
                 end
-%         end 
-          end
-        end      
+            end
+        end
+        
         
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         main_folder = strcat('output\',CallModels{Geo});
-        location_folder = strcat('output\',CallModels{Geo},'\ZhangResults');
-        mat_folder = strcat('output\',CallModels{Geo},'\ZhangResults\mat_files');
-%         plot_folder = strcat('output\',CallModels{Geo},'\markov_matrix\plots');
-%         node_folder = strcat('output\',CallModels{Geo},'\markov_matrix\markov_matrix_per_node');
+        location_folder = strcat('output\',CallModels{Geo},'\markov_matrix');
+        mat_folder = strcat('output\',CallModels{Geo},'\markov_matrix\mat_files');
+        plot_folder = strcat('output\',CallModels{Geo},'\markov_matrix\plots');
+        node_folder = strcat('output\',CallModels{Geo},'\markov_matrix\markov_matrix_per_node');
         
         if not(isfolder(main_folder))
             mkdir(main_folder)
@@ -269,23 +191,22 @@ for Geo=1:size(CallModels,2)    % Run over the number of plaxis model
         if not(isfolder(mat_folder))
             mkdir(mat_folder)
         end
-%         if not(isfolder(plot_folder))
-%             mkdir(plot_folder)
-%         end
-%         if not(isfolder(node_folder))
-%             mkdir(node_folder)
-%         end
+        if not(isfolder(plot_folder))
+            mkdir(plot_folder)
+        end
+        if not(isfolder(node_folder))
+            mkdir(node_folder)
+        end
         
-        save(strcat('output\',CallModels{Geo},'\ZhangResults\mat_files\utilisation.mat'), 'utilisation')
-        save(strcat('output\',CallModels{Geo},'\ZhangResults\mat_files\N_eq.mat'), 'N_eq')  
-        save(strcat('output\',CallModels{Geo},'\ZhangResults\mat_files\multiplier.mat'), 'multiplier') 
+        save(strcat('output\',CallModels{Geo},'\markov_matrix\mat_files\utilisation.mat'), 'utilisation')
+        save(strcat('output\',CallModels{Geo},'\markov_matrix\mat_files\soil_type.mat'), 'soil_type')       
 
 %         save(strcat('output\markov_matrix\',CallModels{Geo},'\mat_files\utilisation.mat'), 'utilisation')
 %         save(strcat('output\markov_matrix\',CallModels{Geo},'\mat_files\soil_type.mat'), 'soil_type')
     end
-%     addpath (genpath('output'));
-%     load(strcat('output\',CallModels{Geo},'\markov_matrix\mat_files\utilisation.mat'));
-%     load(strcat('output\',CallModels{Geo},'\markov_matrix\mat_files\soil_type.mat'));
+    addpath (genpath('output'));
+    load(strcat('output\',CallModels{Geo},'\markov_matrix\mat_files\utilisation.mat'));
+    load(strcat('output\',CallModels{Geo},'\markov_matrix\mat_files\soil_type.mat'));
     %% Final table creation per node
 
 %     for level=1:size(utilisation,1)   % Run over the  load level of each models

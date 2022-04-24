@@ -3,7 +3,7 @@
 % RUN FILE FOR CMAT CALCULATION TOOL
 % CAN PERFORM AXIAL AND LATERAL BEARING CAPACITY CALCULATIONS
 % % % % % function [results] =
-function [results] = run_COSPIN_utilisation_Zhang(Location,Weight,PLAX,PYcreator,variable,loadcase,object_layers,scour,soil,pile,loads,settings,PYcreator_stiff,var_name,constant,con_name,Database,Apply_Direct_springs,Input,multiplier, Initialisation_index,Pu_static) %PNGI
+function [results] = run_COSPIN_utilisation_Zhang(Location,Weight,PLAX,PYcreator,variable,loadcase,object_layers,scour,soil,pile,loads,settings,PYcreator_stiff,var_name,constant,con_name,Database,Apply_Direct_springs,Input,multiplier) %PNGI
 % clear
 % close all
 % clc
@@ -39,7 +39,7 @@ ID = Location;
 % load_case = loadcase;				 
 %%
 for loc = 1:size(ID,1)
-clearvars -except loc ID model pile_length_LC pile_length_end load_case object_layers variable PLAX PYcreator loadcase scour soil pile loads settings Weight PYcreator_stiff var_name constant con_name Database Apply_Direct_springs Input multiplier  Initialisation_index Pu_static
+clearvars -except loc ID model pile_length_LC pile_length_end load_case object_layers variable PLAX PYcreator loadcase scour soil pile loads settings Weight PYcreator_stiff var_name constant con_name Database Apply_Direct_springs Input multiplier
 %data.load_case=	load_case;																		
 %% Project data
 %--------------------------------------------------------------------------
@@ -244,12 +244,9 @@ pile.toe = pile.head - pile.L; % pile toe level
 % if settings.rotationalmultipliers
 %     [element,soil] = interimRotationalMultipliers (element,soil);
 % end
-
-PISA_original_values = element.PISA_param;
 if strcmp(Input.Cyclic_style{1,2} , 'Zhang')
     [element] = cyclic_Zhang_multi(element,multiplier);
 end
-
 %--------------------------------------------------------------------------
 %% Axial calculation / t-z curves / Q-z curves
 %--------------------------------------------------------------------------
@@ -386,44 +383,18 @@ DB_output = [element.PISA_prelim_param.p_y(1,:) , element.PISA_prelim_param.m_t(
 for iii = 1:size(output.hor_defl,1)-2
     
     results.utilisation(iii,1) = output.hor_defl(iii);
-    results.utilisation(iii,2) = (abs( output.hor_defl(iii))/output.hor_defl(iii) ) * interp1( y.top(iii,:) , p.top(iii,:) , abs( output.hor_defl(iii) ) );
+    results.utilisation(iii,2) = (abs(output.hor_defl(iii))/output.hor_defl(iii))*interp1(y.top(iii,:) , p.top(iii,:) , abs(output.hor_defl(iii)));
+    if strcmp(element.type{iii,1} , 'Clay')
+        results.utilisation(iii,3) =  results.utilisation(iii,2) / max(p.top(iii,:));
+    elseif strcmp(element.type{iii,1} , 'Sand')
+        sigma_ref = 100*(element.sigma_v_eff(iii)/100)^0.9;
+        results.utilisation(iii,3) =  results.utilisation(iii,2) / (9.2 * pile.diameter * sigma_ref);
+    else
+        disp('wrong soil type identified!')
+    end
     results.utilisation(iii,4) = element.sigma_v_eff(iii);
     results.utilisation(iii,5) = max(p.top(iii,:));
     results.utilisation(iii,6) = sign(results.utilisation(iii,1));
-    
-    % Unitilisation ration shall be done based Su for clay or stress level
-    % for sand
-    % this part should be replace with Pu from Su_static as input
-    if Initialisation_index==1       
-        % for first type case p/pu and later we setup Pu_Static using Neq=1
-              results.utilisation(iii,3) =  results.utilisation(iii,2) / max(p.top(iii,:));
-    else
-         if strcmp(element.type{iii,1} , 'Clay')
-                results.utilisation(iii,3) =  Pu_static (iii,2) * abs( results.utilisation(iii,2)) /  Pu_static (iii,1) ;
-         elseif strcmp(element.type{iii,1} , 'Sand')  
-                results.utilisation(iii,3) = Pu_static (iii,2) * abs( results.utilisation(iii,2)) / Pu_static (iii,1) ;
-         else
-               disp('wrong soil type identified!')
-         end               
-             
-    end
-
-%     if strcmp(element.type{iii,1} , 'Clay')
-%         
-%         if Initialisation_index==1             
-%               results.utilisation(iii,3) =  results.utilisation(iii,2) / max(p.top(iii,:));
-%         else
-%              results.utilisation(iii,3) =  results.utilisation(iii,2) / Pu_static (iii,1);
-%         end      
-% 
-%     elseif strcmp(element.type{iii,1} , 'Sand')
-%         sigma_ref = 100*(element.sigma_v_eff(iii)/100)^0.9;
-%         results.utilisation(iii,3) =  results.utilisation(iii,2) / (element.Ns(iii) * pile.diameter * sigma_ref);
-% %         results.utilisation(iii,3) =   results.utilisation(iii,2) / ( Pu_static (iii,1));
-%     else
-%         disp('wrong soil type identified!')
-%     end
-
     results.soil_type{iii,1}   = element.type{iii,1};
     results.soil_type{iii,2} = element.level(iii,1);
     results.soil_type{iii,3} = element.level(iii,2);
