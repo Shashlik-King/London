@@ -215,9 +215,12 @@ for Geo=1:size(CallModels,2)    % Run over the number of plaxis model
                           multiplier{level,1}(jj,4) = multiplier{level,1}(jj,2);                           
                           gamma{level,1}(jj,2) = gamma{level,1}(jj,1);
                           
-                          N_eq{level,1}(jj,3) =  N_eq{level,1}(jj,2) ;
-                          multiplier{level,1}(jj,5) = multiplier{level,1}(jj,1);
-                          multiplier{level,1}(jj,6) = multiplier{level,1}(jj,2);   
+%                           N_eq{level,1}(jj,3) =       N_eq{level,1}(jj,2) ;
+%                           multiplier{level,1}(jj,5) =  multiplier{level,1}(jj,1);
+%                           multiplier{level,1}(jj,6) =  multiplier{level,1}(jj,2);
+                         N_eq{level,1}(jj,3) =  N_eq{level,1}(jj,2) +  markow.num(level,5);
+                         if  N_eq{level,1}(jj,3)>=10000;  N_eq{level,1}(jj,3) =10000; end
+                         [multiplier{level,1}(jj,5), multiplier{level,1}(jj,6)] = springs_modifier(multipliers_graph, N_eq{level,1}(jj,3));
                            
                           gamma{level,1}(jj,3) = gamma{level,1}(jj,1);                         
                      end
