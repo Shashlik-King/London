@@ -80,6 +80,9 @@ mysqlstr_ini        = ['INSERT INTO ',settings.db_table,' (Unit_name,Cons_name,P
             database_str = [database_str,',',num2str(element_clean(j,ii))];
         end
         database_str = [database_str,',',num2str(soil.(char(Input.ModelsSpil(Geo))).ASR(index(j))),',',num2str(soil.(char(Input.ModelsSpil(Geo))).Dr(index(j))),',',num2str(soil.(char(Input.ModelsSpil(Geo))).phi(index(j))),',',num2str(soil.(char(Input.ModelsSpil(Geo))).cu(index(j))),',',num2str(soil.(char(Input.ModelsSpil(Geo))).G0(index(j))),',',num2str(soil.(char(Input.ModelsSpil(Geo))).SigmaV(index(j))),',',num2str(soil.(char(Input.ModelsSpil(Geo))).CSR(index(j))),',',num2str(soil.(char(Input.ModelsSpil(Geo))).Neq(index(j))),',',num2str(soil.(char(Input.ModelsSpil(Geo))).CF_OCR(index(j))),',',num2str(soil.(char(Input.ModelsSpil(Geo))).CF_Dr(index(j))),',''',soil.(char(Input.ModelsSpil(Geo))).batch{index(j)},'''',');'];
+        if contains(database_str,'NaN')
+            database_str=strrep(database_str,'NaN','0');
+        end
         mysql(database_str)
     end
     disp('Writing into Database finished.')
