@@ -33,7 +33,7 @@ def f(dependant, type_function, variable):
     
     #exponential function
     elif type_function==2:
-        value=variable[0]+variable[1]**(variable[2]*dependant)
+        value=variable[0]+variable[1]*np.exp(variable[2]*dependant)
 
     #error type
     else:
@@ -107,7 +107,7 @@ def g2(input_data, variable1, variable2, variable3, variable4, variable5, variab
     
     #exponential function
     elif type_function_g==2:
-        value=Constant_1+Constant_2**(Constant_3*dependant_g)
+        value=Constant_1+Constant_2*np.exp(Constant_3*dependant_g)
       
     #error type
     else:
@@ -183,7 +183,7 @@ window.close()
 
 #The GUI can be ignored filling the line below
 ###############################################################################
-#values={'-IN-': '', '-IN-0': '', 0: 'PC1', 1: 'Pu', 2: '0', 3: '1', 4: '1', 5: 'Dr', 6: 'ALL', 7: 'ALL', 8: 'SS1', 9: 'Pu', 10: '1', 11: '1', 12: '1', 13: 'Dr', 14: 'GHS', 15: 'ALL', 16: '', 17: '', 18: '', 19: '', 20: '', 21: '', 22: '', 23: '', 24: '', 25: '', 26: '', 27: '', 28: '', 29: '', 30: '', 31: '', 32: '', 33: '', 34: '', 35: '', 36: '', 37: '', 38: '', 39: '', 40: '', 41: '', 42: '', 43: '', 44: '', 45: '', 46: '', 47: '', 48: '', 49: '', 50: '', 51: '', 52: '', 53: '', 54: '', 55: '', 56: '', 57: '', 58: '', 59: '', 60: '', 61: '', 62: '', 63: '', 64: '', 65: '', 66: '', 67: '', 68: '', 69: '', 70: '', 71: '', 72: '', 73: '', 74: '', 75: '', 76: '', 77: '', 78: '', 79: ''}
+#values={'-IN-': '', '-IN-0': '', 0: 'SS1', 1: 'Pu', 2: '1', 3: '0', 4: '2', 5: 'Dr', 6: 'ALL', 7: 'ALL', 8: 'PC1', 9: 'Pu', 10: '0', 11: '1', 12: '1', 13: 'Dr', 14: 'GHS', 15: 'ALL', 16: '', 17: '', 18: '', 19: '', 20: '', 21: '', 22: '', 23: '', 24: '', 25: '', 26: '', 27: '', 28: '', 29: '', 30: '', 31: '', 32: '', 33: '', 34: '', 35: '', 36: '', 37: '', 38: '', 39: '', 40: '', 41: '', 42: '', 43: '', 44: '', 45: '', 46: '', 47: '', 48: '', 49: '', 50: '', 51: '', 52: '', 53: '', 54: '', 55: '', 56: '', 57: '', 58: '', 59: '', 60: '', 61: '', 62: '', 63: '', 64: '', 65: '', 66: '', 67: '', 68: '', 69: '', 70: '', 71: '', 72: '', 73: '', 74: '', 75: '', 76: '', 77: '', 78: '', 79: ''}
 ###############################################################################
 
 # =============================================================================
@@ -270,10 +270,9 @@ for i in range(len(list_toDo)):
             for index_sand in range(len(list_sand)):
                 for index_g in range(len(list_g)):
                     for index_f in range(len(list_f)):
-                        if(index_f==2 and index_g==2):
-                            print('Double exponential - ignored')
+                        if((index_f>=3 and index_g>=3)):
+                            print('Error!')
                         else:
-                            
                             # parameters set up
                             dependant_f_str=list_sand[index_sand]
                             type_f=list_f[index_f]
@@ -407,83 +406,85 @@ for i in range(len(list_toDo)):
                             #print('==================================================================')
                             #print(range(len(PISA)))
                             #print(type(PISA))
-                            poptM, pcovM = curve_fit(g2,input_data, param_regression)
-                            #print(poptM)
-                            #print(variable_total)
-                            predict_param=g2(input_data,poptM[0],poptM[1],poptM[2],poptM[3],poptM[4],poptM[5],poptM[6],poptM[7],poptM[8]) 
-                            
-                            index_constant=0
-                            if(type_g==0 and type_f==0):
-                                constant=predict_param
-                                predict_param=[]
-                                for index_constant in range(len(param_regression)):
-                                    predict_param=predict_param+[constant]
-                           
-                            #print('Prediction: ', predict_param)
-                            
-                            depth_profile=np.amax(depth)
-                            calc_y=round(depth_profile/5)+1
+                            try: 
+                                poptM, pcovM = curve_fit(g2,input_data, param_regression)
+                                #print(poptM)
+                                #print(variable_total)
+                                predict_param=g2(input_data,poptM[0],poptM[1],poptM[2],poptM[3],poptM[4],poptM[5],poptM[6],poptM[7],poptM[8]) 
+                                
+                                index_constant=0
+                                if(type_g==0 and type_f==0):
+                                    constant=predict_param
+                                    predict_param=[]
+                                    for index_constant in range(len(param_regression)):
+                                        predict_param=predict_param+[constant]
+                               
+                                #print('Prediction: ', predict_param)
+                                
+                                depth_profile=np.amax(depth)
+                                calc_y=round(depth_profile/5)+1
+                                      
+                                M_profile=np.amax(param_regression)
+                                calc_yM=round(M_profile/100)+1
+                                      
+                                fig = plt.figure(figsize=(10, 10))
+                                ax1 = fig.add_subplot(111)
+                                      #ax1.grid()
+                                      
+                                line1=plt.scatter(param_regression,depth)
+                                line1.set_label("Real values")
+                                      
+                                line6=plt.scatter(predict_param,depth,color='black')
+                                line6.set_label('Predicted values')
                                   
-                            M_profile=np.amax(param_regression)
-                            calc_yM=round(M_profile/100)+1
-                                  
-                            fig = plt.figure(figsize=(10, 10))
-                            ax1 = fig.add_subplot(111)
-                                  #ax1.grid()
-                                  
-                            line1=plt.scatter(param_regression,depth)
-                            line1.set_label("Real values")
-                                  
-                            line6=plt.scatter(predict_param,depth,color='black')
-                            line6.set_label('Predicted values')
-                              
-                            ax1.set_xlabel(param_regression_str)
-                                  # ax1.set_xlim(0,max(Gmax))
-                            min_depth=0
-                            max_depth=calc_y*5
-                            plt.ylim([min_depth,max_depth])
-                            plt.xlim([0,calc_yM*M_profile*2])
-                            plt.gca().invert_yaxis()
-                            ax1.set_ylabel('Depth [m]')
-                                  
-                            ax1.legend()
-                            
-                            type_f=str(list_f[index_f])
-                            type_g=str(list_g[index_g])
-                            
-                            if(type_g=='0'):
-                                if(type_f=='0'):
-                                    plt.title(Unit[0]+": "+param_regression_str+"= ( "+param_regression_str+"_1= ("+str(round(poptM[0],2))+") )")
-                                elif(type_f=='1'):
-                                    plt.title(Unit[0]+": "+param_regression_str+"= ( "+param_regression_str+"_1= ("+str(round(poptM[0],2))+"+"+str(round(poptM[1],2))+ "*"+dependant_f_str +") )")
+                                ax1.set_xlabel(param_regression_str)
+                                      # ax1.set_xlim(0,max(Gmax))
+                                min_depth=0
+                                max_depth=calc_y*5
+                                plt.ylim([min_depth,max_depth])
+                                plt.xlim([0,calc_yM*M_profile*2])
+                                plt.gca().invert_yaxis()
+                                ax1.set_ylabel('Depth [m]')
+                                      
+                                ax1.legend()
+                                
+                                type_f=str(list_f[index_f])
+                                type_g=str(list_g[index_g])
+                                
+                                if(type_g=='0'):
+                                    if(type_f=='0'):
+                                        plt.title(Unit[0]+": "+param_regression_str+"= ( "+param_regression_str+"_1= ("+str(round(poptM[0],2))+") )")
+                                    elif(type_f=='1'):
+                                        plt.title(Unit[0]+": "+param_regression_str+"= ( "+param_regression_str+"_1= ("+str(round(poptM[0],2))+"+"+str(round(poptM[1],2))+ "*"+dependant_f_str +") )")
+                                    else:
+                                        plt.title(Unit[0]+": "+param_regression_str+"= ( "+param_regression_str+"_1= ("+str(round(poptM[0],2))+"+"+str(round(poptM[1],2))+"*exp("+str(round(poptM[2],2))+"*"+dependant_f_str +") )")
+                                elif(type_g=='1'):
+                                    if(type_f=='0'):
+                                        plt.title(Unit[0]+": "+param_regression_str+"= ( "+param_regression_str+"_1= ("+str(round(poptM[0],2))+") "+"+ ("+param_regression_str+"_2= ("+str(round(poptM[1],2))+"))"+" *"+dependant_g_str+" )")
+                                    elif(type_f=='1'):
+                                        plt.title(Unit[0]+": "+param_regression_str+"= ( "+param_regression_str+"_1= ("+str(round(poptM[0],2))+"+"+str(round(poptM[1],2))+ "*"+dependant_f_str +") "+"+ ("+param_regression_str+"_2= ("+str(round(poptM[2],2))+"+"+str(round(poptM[3],2))+ "*"+dependant_f_str+"))"+" *"+dependant_g_str+" )")
+                                    else:
+                                        plt.title(Unit[0]+": "+param_regression_str+"= ( "+param_regression_str+"_1= ("+str(round(poptM[0],2))+"+"+str(round(poptM[1],2))+"*exp("+str(round(poptM[2],2))+ "*"+dependant_f_str +") "+"+ ("+param_regression_str+"_2= ("+str(round(poptM[3],2))+"+"+str(round(poptM[4],2))+"*exp("+str(round(poptM[5],2))+ "*"+dependant_f_str+"))"+" *"+dependant_g_str+" )")
                                 else:
-                                    plt.title(Unit[0]+": "+param_regression_str+"= ( "+param_regression_str+"_1= ("+str(round(poptM[0],2))+"+"+str(round(poptM[1],2))+"^("+str(round(poptM[2],2))+"*"+dependant_f_str +") )")
-                            elif(type_g=='1'):
-                                if(type_f=='0'):
-                                    plt.title(Unit[0]+": "+param_regression_str+"= ( "+param_regression_str+"_1= ("+str(round(poptM[0],2))+") "+"+ ("+param_regression_str+"_2= ("+str(round(poptM[1],2))+"))"+" *"+dependant_g_str+" )")
-                                elif(type_f=='1'):
-                                    plt.title(Unit[0]+": "+param_regression_str+"= ( "+param_regression_str+"_1= ("+str(round(poptM[0],2))+"+"+str(round(poptM[1],2))+ "*"+dependant_f_str +") "+"+ ("+param_regression_str+"_2= ("+str(round(poptM[2],2))+"+"+str(round(poptM[3],2))+ "*"+dependant_f_str+"))"+" *"+dependant_g_str+" )")
-                                else:
-                                    plt.title(Unit[0]+": "+param_regression_str+"= ( "+param_regression_str+"_1= ("+str(round(poptM[0],2))+"+"+str(round(poptM[1],2))+"^("+str(round(poptM[2],2))+ "*"+dependant_f_str +") "+"+ ("+param_regression_str+"_2= ("+str(round(poptM[3],2))+"+"+str(round(poptM[4],2))+"^("+str(round(poptM[5],2))+ "*"+dependant_f_str+"))"+" *"+dependant_g_str+" )")
-                            else:
-                                 if(type_f=='0'):
-                                     plt.title(Unit[0]+": "+param_regression_str+"= ( "+param_regression_str+"_1= ("+str(round(poptM[0],2))+") "+"+ ("+param_regression_str+"_2= ("+str(round(poptM[1],2))+"))"+"^("+param_regression_str+"_3= ("+str(round(poptM[2],2))+"))"+" *"+dependant_g_str+") )")
-                                 elif(type_f=='1'):
-                                     plt.title(Unit[0]+": "+param_regression_str+"= ( "+param_regression_str+"_1= ("+str(round(poptM[0],2))+"+"+str(round(poptM[1],2))+ "*"+dependant_f_str +") "+"+ ("+param_regression_str+"_2= ("+str(round(poptM[2],2))+"+"+str(round(poptM[3],2))+ "*"+dependant_f_str+"))"+"^("+param_regression_str+"_3= ("+str(round(poptM[4],2))+"+"+str(round(poptM[5],2))+"*"+dependant_f_str+")"+" *"+dependant_g_str+") )")
-                                 else:
-                                     plt.title(Unit[0]+": "+param_regression_str+"= ( "+param_regression_str+"_1= ("+str(round(poptM[0],2))+"+"+str(round(poptM[1],2))+"^("+str(round(poptM[2],2))+ "*"+dependant_f_str +") "+"+ ("+param_regression_str+"_2= ("+str(round(poptM[3],2))+"+"+str(round(poptM[4],2))+"^("+str(round(poptM[5],2))+ "*"+dependant_f_str+"))"+"^("+param_regression_str+"_3= ("+str(round(poptM[6],2))+"+"+str(round(poptM[7],2))+"^("+str(round(poptM[8],2))+"*"+dependant_f_str+"))"" *"+dependant_g_str+") )")
-                                        
-                                  
-                            #variable_total= [0.3667, 25.89, 0.3375, -8.9, 1, 1]     
-                            
-                            error=Error_function(param_regression,input_data,poptM[0],poptM[1],poptM[2],poptM[3],poptM[4],poptM[5],poptM[6],poptM[7],poptM[8])
-                            
-                            error_table=error_table+[('Error_',param_regression_str,'_f:',type_f,'_g:',type_g,'_dependant_f:',dependant_f_str,'_dependant_g:',dependant_g_str,'_error:',error)]
-                            error_max=error_max+[error]
-                            
-                            print('==================================================================')
-                            print('Error_predict: ', error)  
-                        
+                                     if(type_f=='0'):
+                                         plt.title(Unit[0]+": "+param_regression_str+"= ( "+param_regression_str+"_1= ("+str(round(poptM[0],2))+") "+"+ ("+param_regression_str+"_2= ("+str(round(poptM[1],2))+"))"+"*exp("+param_regression_str+"_3= ("+str(round(poptM[2],2))+"))"+" *"+dependant_g_str+") )")
+                                     elif(type_f=='1'):
+                                         plt.title(Unit[0]+": "+param_regression_str+"= ( "+param_regression_str+"_1= ("+str(round(poptM[0],2))+"+"+str(round(poptM[1],2))+ "*"+dependant_f_str +") "+"+ ("+param_regression_str+"_2= ("+str(round(poptM[2],2))+"+"+str(round(poptM[3],2))+ "*"+dependant_f_str+"))"+"*exp("+param_regression_str+"_3= ("+str(round(poptM[4],2))+"+"+str(round(poptM[5],2))+"*"+dependant_f_str+")"+" *"+dependant_g_str+") )")
+                                     else:
+                                         plt.title(Unit[0]+": "+param_regression_str+"= ( "+param_regression_str+"_1= ("+str(round(poptM[0],2))+"+"+str(round(poptM[1],2))+"*exp("+str(round(poptM[2],2))+ "*"+dependant_f_str +") "+"+ ("+param_regression_str+"_2= ("+str(round(poptM[3],2))+"+"+str(round(poptM[4],2))+"*exp("+str(round(poptM[5],2))+ "*"+dependant_f_str+"))"+"*exp("+param_regression_str+"_3= ("+str(round(poptM[6],2))+"+"+str(round(poptM[7],2))+"*exp("+str(round(poptM[8],2))+"*"+dependant_f_str+"))"" *"+dependant_g_str+") )")
+                                            
+                                      
+                                #variable_total= [0.3667, 25.89, 0.3375, -8.9, 1, 1]     
+                                
+                                error=Error_function(param_regression,input_data,poptM[0],poptM[1],poptM[2],poptM[3],poptM[4],poptM[5],poptM[6],poptM[7],poptM[8])
+                                
+                                error_table=error_table+[('Error_',param_regression_str,'_f:',type_f,'_g:',type_g,'_dependant_f:',dependant_f_str,'_dependant_g:',dependant_g_str,'_error:',error)]
+                                error_max=error_max+[error]
+                                
+                                print('==================================================================')
+                                print('Error_predict: ', error)  
+                            except:
+                                pass
         else:
             print('==================================================================')
             print('Running on parameters of CLAY: Su, CSR, G0, Cf')
@@ -499,8 +500,8 @@ for i in range(len(list_toDo)):
             for index_sand in range(len(list_clay)):
                 for index_g in range(len(list_g)):
                     for index_f in range(len(list_f)):
-                        if(index_f==2 and index_g==2):
-                            print('Double exponential!')
+                        if(index_f>=3 and index_g>=3):
+                            print('Error!')
                         else:
                             
                             # parameters set up
@@ -637,83 +638,85 @@ for i in range(len(list_toDo)):
                             #print('==================================================================')
                             #print(range(len(PISA)))
                             #print(type(PISA))
-                            poptM, pcovM = curve_fit(g2,input_data, param_regression)
-                            #print(poptM)
-                            #print(variable_total)
-                            predict_param=g2(input_data,poptM[0],poptM[1],poptM[2],poptM[3],poptM[4],poptM[5],poptM[6],poptM[7],poptM[8]) 
-                            
-                            index_constant=0
-                            if(type_g==0 and type_f==0):
-                                constant=predict_param
-                                predict_param=[]
-                                for index_constant in range(len(param_regression)):
-                                    predict_param=predict_param+[constant]
-                           
-                            print('Prediction: ', predict_param)
-                            
-                            depth_profile=np.amax(depth)
-                            calc_y=round(depth_profile/5)+1
+                            try:
+                                poptM, pcovM = curve_fit(g2,input_data, param_regression)
+                                #print(poptM)
+                                #print(variable_total)
+                                predict_param=g2(input_data,poptM[0],poptM[1],poptM[2],poptM[3],poptM[4],poptM[5],poptM[6],poptM[7],poptM[8]) 
+                                
+                                index_constant=0
+                                if(type_g==0 and type_f==0):
+                                    constant=predict_param
+                                    predict_param=[]
+                                    for index_constant in range(len(param_regression)):
+                                        predict_param=predict_param+[constant]
+                               
+                                print('Prediction: ', predict_param)
+                                
+                                depth_profile=np.amax(depth)
+                                calc_y=round(depth_profile/5)+1
+                                      
+                                M_profile=np.amax(param_regression)
+                                calc_yM=round(M_profile/100)+1
+                                      
+                                fig = plt.figure(figsize=(10, 10))
+                                ax1 = fig.add_subplot(111)
+                                      #ax1.grid()
+                                      
+                                line1=plt.scatter(param_regression,depth)
+                                line1.set_label("Real values")
+                                      
+                                line6=plt.scatter(predict_param,depth,color='black')
+                                line6.set_label('Predicted values')
                                   
-                            M_profile=np.amax(param_regression)
-                            calc_yM=round(M_profile/100)+1
-                                  
-                            fig = plt.figure(figsize=(10, 10))
-                            ax1 = fig.add_subplot(111)
-                                  #ax1.grid()
-                                  
-                            line1=plt.scatter(param_regression,depth)
-                            line1.set_label("Real values")
-                                  
-                            line6=plt.scatter(predict_param,depth,color='black')
-                            line6.set_label('Predicted values')
-                              
-                            ax1.set_xlabel(param_regression_str)
-                                  # ax1.set_xlim(0,max(Gmax))
-                            min_depth=0
-                            max_depth=calc_y*5
-                            plt.ylim([min_depth,max_depth])
-                            plt.xlim([0,calc_yM*M_profile*2])
-                            plt.gca().invert_yaxis()
-                            ax1.set_ylabel('Depth [m]')
-                                  
-                            ax1.legend()
-                            
-                            type_f=str(list_f[index_f])
-                            type_g=str(list_g[index_g])
-                            
-                            if(type_g=='0'):
-                                if(type_f=='0'):
-                                    plt.title(Unit[0]+": "+param_regression_str+"= ( "+param_regression_str+"_1= ("+str(round(poptM[0],2))+") )")
-                                elif(type_f=='1'):
-                                    plt.title(Unit[0]+": "+param_regression_str+"= ( "+param_regression_str+"_1= ("+str(round(poptM[0],2))+"+"+str(round(poptM[1],2))+ "*"+dependant_f_str +") )")
+                                ax1.set_xlabel(param_regression_str)
+                                      # ax1.set_xlim(0,max(Gmax))
+                                min_depth=0
+                                max_depth=calc_y*5
+                                plt.ylim([min_depth,max_depth])
+                                plt.xlim([0,calc_yM*M_profile*2])
+                                plt.gca().invert_yaxis()
+                                ax1.set_ylabel('Depth [m]')
+                                      
+                                ax1.legend()
+                                
+                                type_f=str(list_f[index_f])
+                                type_g=str(list_g[index_g])
+                                
+                                if(type_g=='0'):
+                                    if(type_f=='0'):
+                                        plt.title(Unit[0]+": "+param_regression_str+"= ( "+param_regression_str+"_1= ("+str(round(poptM[0],2))+") )")
+                                    elif(type_f=='1'):
+                                        plt.title(Unit[0]+": "+param_regression_str+"= ( "+param_regression_str+"_1= ("+str(round(poptM[0],2))+"+"+str(round(poptM[1],2))+ "*"+dependant_f_str +") )")
+                                    else:
+                                        plt.title(Unit[0]+": "+param_regression_str+"= ( "+param_regression_str+"_1= ("+str(round(poptM[0],2))+"+"+str(round(poptM[1],2))+"*exp("+str(round(poptM[2],2))+"*"+dependant_f_str +") )")
+                                elif(type_g=='1'):
+                                    if(type_f=='0'):
+                                        plt.title(Unit[0]+": "+param_regression_str+"= ( "+param_regression_str+"_1= ("+str(round(poptM[0],2))+") "+"+ ("+param_regression_str+"_2= ("+str(round(poptM[1],2))+"))"+" *"+dependant_g_str+" )")
+                                    elif(type_f=='1'):
+                                        plt.title(Unit[0]+": "+param_regression_str+"= ( "+param_regression_str+"_1= ("+str(round(poptM[0],2))+"+"+str(round(poptM[1],2))+ "*"+dependant_f_str +") "+"+ ("+param_regression_str+"_2= ("+str(round(poptM[2],2))+"+"+str(round(poptM[3],2))+ "*"+dependant_f_str+"))"+" *"+dependant_g_str+" )")
+                                    else:
+                                        plt.title(Unit[0]+": "+param_regression_str+"= ( "+param_regression_str+"_1= ("+str(round(poptM[0],2))+"+"+str(round(poptM[1],2))+"*exp("+str(round(poptM[2],2))+ "*"+dependant_f_str +") "+"+ ("+param_regression_str+"_2= ("+str(round(poptM[3],2))+"+"+str(round(poptM[4],2))+"*exp("+str(round(poptM[5],2))+ "*"+dependant_f_str+"))"+" *"+dependant_g_str+" )")
                                 else:
-                                    plt.title(Unit[0]+": "+param_regression_str+"= ( "+param_regression_str+"_1= ("+str(round(poptM[0],2))+"+"+str(round(poptM[1],2))+"^("+str(round(poptM[2],2))+"*"+dependant_f_str +") )")
-                            elif(type_g=='1'):
-                                if(type_f=='0'):
-                                    plt.title(Unit[0]+": "+param_regression_str+"= ( "+param_regression_str+"_1= ("+str(round(poptM[0],2))+") "+"+ ("+param_regression_str+"_2= ("+str(round(poptM[1],2))+"))"+" *"+dependant_g_str+" )")
-                                elif(type_f=='1'):
-                                    plt.title(Unit[0]+": "+param_regression_str+"= ( "+param_regression_str+"_1= ("+str(round(poptM[0],2))+"+"+str(round(poptM[1],2))+ "*"+dependant_f_str +") "+"+ ("+param_regression_str+"_2= ("+str(round(poptM[2],2))+"+"+str(round(poptM[3],2))+ "*"+dependant_f_str+"))"+" *"+dependant_g_str+" )")
-                                else:
-                                    plt.title(Unit[0]+": "+param_regression_str+"= ( "+param_regression_str+"_1= ("+str(round(poptM[0],2))+"+"+str(round(poptM[1],2))+"^("+str(round(poptM[2],2))+ "*"+dependant_f_str +") "+"+ ("+param_regression_str+"_2= ("+str(round(poptM[3],2))+"+"+str(round(poptM[4],2))+"^("+str(round(poptM[5],2))+ "*"+dependant_f_str+"))"+" *"+dependant_g_str+" )")
-                            else:
-                                 if(type_f=='0'):
-                                     plt.title(Unit[0]+": "+param_regression_str+"= ( "+param_regression_str+"_1= ("+str(round(poptM[0],2))+") "+"+ ("+param_regression_str+"_2= ("+str(round(poptM[1],2))+"))"+"^("+param_regression_str+"_3= ("+str(round(poptM[2],2))+"))"+" *"+dependant_g_str+") )")
-                                 elif(type_f=='1'):
-                                     plt.title(Unit[0]+": "+param_regression_str+"= ( "+param_regression_str+"_1= ("+str(round(poptM[0],2))+"+"+str(round(poptM[1],2))+ "*"+dependant_f_str +") "+"+ ("+param_regression_str+"_2= ("+str(round(poptM[2],2))+"+"+str(round(poptM[3],2))+ "*"+dependant_f_str+"))"+"^("+param_regression_str+"_3= ("+str(round(poptM[4],2))+"+"+str(round(poptM[5],2))+"*"+dependant_f_str+")"+" *"+dependant_g_str+") )")
-                                 else:
-                                     plt.title(Unit[0]+": "+param_regression_str+"= ( "+param_regression_str+"_1= ("+str(round(poptM[0],2))+"+"+str(round(poptM[1],2))+"^("+str(round(poptM[2],2))+ "*"+dependant_f_str +") "+"+ ("+param_regression_str+"_2= ("+str(round(poptM[3],2))+"+"+str(round(poptM[4],2))+"^("+str(round(poptM[5],2))+ "*"+dependant_f_str+"))"+"^("+param_regression_str+"_3= ("+str(round(poptM[6],2))+"+"+str(round(poptM[7],2))+"^("+str(round(poptM[8],2))+"*"+dependant_f_str+"))"" *"+dependant_g_str+") )")
-                                       
-                                  
-                            #variable_total= [0.3667, 25.89, 0.3375, -8.9, 1, 1]     
-                            
-                            error=Error_function(param_regression,input_data,poptM[0],poptM[1],poptM[2],poptM[3],poptM[4],poptM[5],poptM[6],poptM[7],poptM[8])
-                            
-                            error_table=error_table+[('Error_',param_regression_str,'_f:',type_f,'_g:',type_g,'_dependant_f:',dependant_f_str,'_dependant_g:',dependant_g_str,'_error:',error)]
-                            error_max=error_max+[error]
-                            
-                            print('==================================================================')
-                            print('Error_predict: ', error)  
-        
+                                     if(type_f=='0'):
+                                         plt.title(Unit[0]+": "+param_regression_str+"= ( "+param_regression_str+"_1= ("+str(round(poptM[0],2))+") "+"+ ("+param_regression_str+"_2= ("+str(round(poptM[1],2))+"))"+"*exp("+param_regression_str+"_3= ("+str(round(poptM[2],2))+"))"+" *"+dependant_g_str+") )")
+                                     elif(type_f=='1'):
+                                         plt.title(Unit[0]+": "+param_regression_str+"= ( "+param_regression_str+"_1= ("+str(round(poptM[0],2))+"+"+str(round(poptM[1],2))+ "*"+dependant_f_str +") "+"+ ("+param_regression_str+"_2= ("+str(round(poptM[2],2))+"+"+str(round(poptM[3],2))+ "*"+dependant_f_str+"))"+"*exp("+param_regression_str+"_3= ("+str(round(poptM[4],2))+"+"+str(round(poptM[5],2))+"*"+dependant_f_str+")"+" *"+dependant_g_str+") )")
+                                     else:
+                                         plt.title(Unit[0]+": "+param_regression_str+"= ( "+param_regression_str+"_1= ("+str(round(poptM[0],2))+"+"+str(round(poptM[1],2))+"*exp("+str(round(poptM[2],2))+ "*"+dependant_f_str +") "+"+ ("+param_regression_str+"_2= ("+str(round(poptM[3],2))+"+"+str(round(poptM[4],2))+"*exp("+str(round(poptM[5],2))+ "*"+dependant_f_str+"))"+"*exp("+param_regression_str+"_3= ("+str(round(poptM[6],2))+"+"+str(round(poptM[7],2))+"*exp("+str(round(poptM[8],2))+"*"+dependant_f_str+"))"" *"+dependant_g_str+") )")
+                                           
+                                      
+                                #variable_total= [0.3667, 25.89, 0.3375, -8.9, 1, 1]     
+                                
+                                error=Error_function(param_regression,input_data,poptM[0],poptM[1],poptM[2],poptM[3],poptM[4],poptM[5],poptM[6],poptM[7],poptM[8])
+                                
+                                error_table=error_table+[('Error_',param_regression_str,'_f:',type_f,'_g:',type_g,'_dependant_f:',dependant_f_str,'_dependant_g:',dependant_g_str,'_error:',error)]
+                                error_max=error_max+[error]
+                                
+                                print('==================================================================')
+                                print('Error_predict: ', error)  
+                            except:
+                                pass
         print('==================================================================')
         print('Final_error_table:')
 
@@ -885,71 +888,75 @@ for i in range(len(list_toDo)):
         print('==================================================================')
         #print(range(len(PISA)))
         #print(type(PISA))
-        poptM, pcovM = curve_fit(g2,input_data, param_regression)
-        print(poptM)
-        #print(variable_total)
-        predict_param=g2(input_data,poptM[0],poptM[1],poptM[2],poptM[3],poptM[4],poptM[5],poptM[6],poptM[7],poptM[8]) 
-        
-        index_constant=0
-        if(type_g=='0' and type_f=='0'):
-            constant=predict_param
-            predict_param=[]
-            for index_constant in range(len(param_regression)):
-                predict_param=predict_param+[constant]
-       
-        print('Prediction: ', predict_param)
-        
-        depth_profile=np.amax(depth)
-        calc_y=round(depth_profile/5)+1
+        try:
+            poptM, pcovM = curve_fit(g2,input_data, param_regression)
+            print(poptM)
+            #print(variable_total)
+            predict_param=g2(input_data,poptM[0],poptM[1],poptM[2],poptM[3],poptM[4],poptM[5],poptM[6],poptM[7],poptM[8]) 
+            
+            index_constant=0
+            if(type_g=='0' and type_f=='0'):
+                constant=predict_param
+                predict_param=[]
+                for index_constant in range(len(param_regression)):
+                    predict_param=predict_param+[constant]
+           
+            print('Prediction: ', predict_param)
+            
+            depth_profile=np.amax(depth)
+            calc_y=round(depth_profile/5)+1
+                  
+            M_profile=np.amax(param_regression)
+            calc_yM=round(M_profile/100)+1
+                  
+            fig = plt.figure(figsize=(10, 10))
+            ax1 = fig.add_subplot(111)
+                  #ax1.grid()
+                  
+            line1=plt.scatter(param_regression,depth)
+            line1.set_label("Real values")
+                  
+            line6=plt.scatter(predict_param,depth,color='black')
+            line6.set_label('Predicted values')
               
-        M_profile=np.amax(param_regression)
-        calc_yM=round(M_profile/100)+1
-              
-        fig = plt.figure(figsize=(10, 10))
-        ax1 = fig.add_subplot(111)
-              #ax1.grid()
-              
-        line1=plt.scatter(param_regression,depth)
-        line1.set_label("Real values")
-              
-        line6=plt.scatter(predict_param,depth,color='black')
-        line6.set_label('Predicted values')
-          
-        ax1.set_xlabel(param_regression_str)
-              # ax1.set_xlim(0,max(Gmax))
-        min_depth=0
-        max_depth=calc_y*5
-        plt.ylim([min_depth,max_depth])
-        plt.xlim([0,calc_yM*M_profile*2])
-        plt.gca().invert_yaxis()
-        ax1.set_ylabel('Depth [m]')
-              
-        ax1.legend()
-        
-        if(type_g=='0'):
-            if(type_f=='0'):
-                plt.title(Unit[0]+": "+param_regression_str+"= ( "+param_regression_str+"_1= ("+str(round(poptM[0],2))+") )")
-            elif(type_f=='1'):
-                plt.title(Unit[0]+": "+param_regression_str+"= ( "+param_regression_str+"_1= ("+str(round(poptM[0],2))+"+"+str(round(poptM[1],2))+ "*"+dependant_f_str +") )")
+            ax1.set_xlabel(param_regression_str)
+                  # ax1.set_xlim(0,max(Gmax))
+            min_depth=0
+            max_depth=calc_y*5
+            plt.ylim([min_depth,max_depth])
+            plt.xlim([0,calc_yM*M_profile*2])
+            plt.gca().invert_yaxis()
+            ax1.set_ylabel('Depth [m]')
+                  
+            ax1.legend()
+            
+            if(type_g=='0'):
+                if(type_f=='0'):
+                    plt.title(Unit[0]+": "+param_regression_str+"= ( "+param_regression_str+"_1= ("+str(round(poptM[0],2))+") )")
+                elif(type_f=='1'):
+                    plt.title(Unit[0]+": "+param_regression_str+"= ( "+param_regression_str+"_1= ("+str(round(poptM[0],2))+"+"+str(round(poptM[1],2))+ "*"+dependant_f_str +") )")
+                else:
+                    plt.title(Unit[0]+": "+param_regression_str+"= ( "+param_regression_str+"_1= ("+str(round(poptM[0],2))+"+"+str(round(poptM[1],2))+"*exp("+str(round(poptM[2],2))+"*"+dependant_f_str +") )")
+            elif(type_g=='1'):
+                if(type_f=='0'):
+                    plt.title(Unit[0]+": "+param_regression_str+"= ( "+param_regression_str+"_1= ("+str(round(poptM[0],2))+") "+"+ ("+param_regression_str+"_2= ("+str(round(poptM[1],2))+"))"+" *"+dependant_g_str+" )")
+                elif(type_f=='1'):
+                    plt.title(Unit[0]+": "+param_regression_str+"= ( "+param_regression_str+"_1= ("+str(round(poptM[0],2))+"+"+str(round(poptM[1],2))+ "*"+dependant_f_str +") "+"+ ("+param_regression_str+"_2= ("+str(round(poptM[2],2))+"+"+str(round(poptM[3],2))+ "*"+dependant_f_str+"))"+" *"+dependant_g_str+" )")
+                else:
+                    plt.title(Unit[0]+": "+param_regression_str+"= ( "+param_regression_str+"_1= ("+str(round(poptM[0],2))+"+"+str(round(poptM[1],2))+"*exp("+str(round(poptM[2],2))+ "*"+dependant_f_str +") "+"+ ("+param_regression_str+"_2= ("+str(round(poptM[3],2))+"+"+str(round(poptM[4],2))+"*exp("+str(round(poptM[5],2))+ "*"+dependant_f_str+"))"+" *"+dependant_g_str+" )")
             else:
-                plt.title(Unit[0]+": "+param_regression_str+"= ( "+param_regression_str+"_1= ("+str(round(poptM[0],2))+"+"+str(round(poptM[1],2))+"^("+str(round(poptM[2],2))+"*"+dependant_f_str +") )")
-        elif(type_g=='1'):
-            if(type_f=='0'):
-                plt.title(Unit[0]+": "+param_regression_str+"= ( "+param_regression_str+"_1= ("+str(round(poptM[0],2))+") "+"+ ("+param_regression_str+"_2= ("+str(round(poptM[1],2))+"))"+" *"+dependant_g_str+" )")
-            elif(type_f=='1'):
-                plt.title(Unit[0]+": "+param_regression_str+"= ( "+param_regression_str+"_1= ("+str(round(poptM[0],2))+"+"+str(round(poptM[1],2))+ "*"+dependant_f_str +") "+"+ ("+param_regression_str+"_2= ("+str(round(poptM[2],2))+"+"+str(round(poptM[3],2))+ "*"+dependant_f_str+"))"+" *"+dependant_g_str+" )")
-            else:
-                plt.title(Unit[0]+": "+param_regression_str+"= ( "+param_regression_str+"_1= ("+str(round(poptM[0],2))+"+"+str(round(poptM[1],2))+"^("+str(round(poptM[2],2))+ "*"+dependant_f_str +") "+"+ ("+param_regression_str+"_2= ("+str(round(poptM[3],2))+"+"+str(round(poptM[4],2))+"^("+str(round(poptM[5],2))+ "*"+dependant_f_str+"))"+" *"+dependant_g_str+" )")
-        else:
-             if(type_f=='0'):
-                 plt.title(Unit[0]+": "+param_regression_str+"= ( "+param_regression_str+"_1= ("+str(round(poptM[0],2))+") "+"+ ("+param_regression_str+"_2= ("+str(round(poptM[1],2))+"))"+"^("+param_regression_str+"_3= ("+str(round(poptM[2],2))+"))"+" *"+dependant_g_str+") )")
-             elif(type_f=='1'):
-                 plt.title(Unit[0]+": "+param_regression_str+"= ( "+param_regression_str+"_1= ("+str(round(poptM[0],2))+"+"+str(round(poptM[1],2))+ "*"+dependant_f_str +") "+"+ ("+param_regression_str+"_2= ("+str(round(poptM[2],2))+"+"+str(round(poptM[3],2))+ "*"+dependant_f_str+"))"+"^("+param_regression_str+"_3= ("+str(round(poptM[4],2))+"+"+str(round(poptM[5],2))+"*"+dependant_f_str+")"+" *"+dependant_g_str+") )")
-             else:
-                 plt.title(Unit[0]+": "+param_regression_str+"= ( "+param_regression_str+"_1= ("+str(round(poptM[0],2))+"+"+str(round(poptM[1],2))+"^("+str(round(poptM[2],2))+ "*"+dependant_f_str +") "+"+ ("+param_regression_str+"_2= ("+str(round(poptM[3],2))+"+"+str(round(poptM[4],2))+"^("+str(round(poptM[5],2))+ "*"+dependant_f_str+"))"+"^("+param_regression_str+"_3= ("+str(round(poptM[6],2))+"+"+str(round(poptM[7],2))+"^("+str(round(poptM[8],2))+"*"+dependant_f_str+"))"" *"+dependant_g_str+") )")
-              
-        #variable_total= [0.3667, 25.89, 0.3375, -8.9, 1, 1]     
-        
-        error=Error_function(param_regression,input_data,poptM[0],poptM[1],poptM[2],poptM[3],poptM[4],poptM[5],poptM[6],poptM[7],poptM[8])
-        print('==================================================================')
-        print('Error_predict: ', error)  
+                 if(type_f=='0'):
+                     plt.title(Unit[0]+": "+param_regression_str+"= ( "+param_regression_str+"_1= ("+str(round(poptM[0],2))+") "+"+ ("+param_regression_str+"_2= ("+str(round(poptM[1],2))+"))"+"*exp("+param_regression_str+"_3= ("+str(round(poptM[2],2))+"))"+" *"+dependant_g_str+") )")
+                 elif(type_f=='1'):
+                     plt.title(Unit[0]+": "+param_regression_str+"= ( "+param_regression_str+"_1= ("+str(round(poptM[0],2))+"+"+str(round(poptM[1],2))+ "*"+dependant_f_str +") "+"+ ("+param_regression_str+"_2= ("+str(round(poptM[2],2))+"+"+str(round(poptM[3],2))+ "*"+dependant_f_str+"))"+"*exp("+param_regression_str+"_3= ("+str(round(poptM[4],2))+"+"+str(round(poptM[5],2))+"*"+dependant_f_str+")"+" *"+dependant_g_str+") )")
+                 else:
+                     plt.title(Unit[0]+": "+param_regression_str+"= ( "+param_regression_str+"_1= ("+str(round(poptM[0],2))+"+"+str(round(poptM[1],2))+"*exp("+str(round(poptM[2],2))+ "*"+dependant_f_str +") "+"+ ("+param_regression_str+"_2= ("+str(round(poptM[3],2))+"+"+str(round(poptM[4],2))+"*exp("+str(round(poptM[5],2))+ "*"+dependant_f_str+"))"+"*exp("+param_regression_str+"_3= ("+str(round(poptM[6],2))+"+"+str(round(poptM[7],2))+"*exp("+str(round(poptM[8],2))+"*"+dependant_f_str+"))"" *"+dependant_g_str+") )")
+                  
+            #variable_total= [0.3667, 25.89, 0.3375, -8.9, 1, 1]     
+            
+            error=Error_function(param_regression,input_data,poptM[0],poptM[1],poptM[2],poptM[3],poptM[4],poptM[5],poptM[6],poptM[7],poptM[8])
+            print('==================================================================')
+            print('Error_predict: ', error)  
+        except:
+            print('Maximum iteration reached for CurveFit function')
+            pass
