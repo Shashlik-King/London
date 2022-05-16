@@ -27,27 +27,32 @@ def getInfo(df):
     
     DispDict= dict(Disp_phase_1=float(df['D/200'][0])*float(df['Diameter'][0]),Disp_phase_2=float(df['D/10'][0])*float(df['Diameter'][0]))
     
+    SLS_load = df['SLS_load'].dropna().values.tolist()
+    mesh_coarseness = df['mesh_coarseness'].dropna().values.tolist();
+    
     sPropList=[]
     soil_layers=[0]
     for i in range(len(df['t_i'].values.tolist())):
         
-        sPropList.append(dict(t=float(df['t_i'].values.tolist()[i]),Constitutive=str(df['Constitutive_model'].values.tolist()[i]),Eoed=float(df['E_oed'].values.tolist()[i]),
-                                E50=float(df['E_50'].values.tolist()[i]), 
-                                E=float(df['E_ur'].values.tolist()[i]),
-                                m=float(df['m'].values.tolist()[i]), nu=float(df['v_i'].values.tolist()[i]),
-        						c=float(df['c_i'].values.tolist()[i]), gamma07=float(df['gamma07'].values.tolist()[i]),
-                                G0ref=float(df['G0'].values.tolist()[i]), 
-                                phi=float(df['phi_i'].values.tolist()[i]), dref=float(df['d_ref'].values.tolist()[i]), psi=float(df['psi'].values.tolist()[i]),
-                                cinc=float(df['c_inc_i'].values.tolist()[i]), gamma=float(df['gamma'].values.tolist()[i]),
-                                K0=float(df['K0'].values.tolist()[i]), Ri=float(df['R_inter_i'].values.tolist()[i]), 
-                                Drainage=float(df['Drainage'].values.tolist()[i]),Dilation=float(df['dilation cut-off'].values.tolist()[i]),
-                                e0=float(df['e0'].values.tolist()[i]),emin=float(df['emin'].values.tolist()[i]),emax=float(df['emax'].values.tolist()[i]),
-                                                                                           
-                                Gur_suA=float(df['Gur/suA'].values.tolist()[i]),gamma_f_C=float(df['gamma_f_C'].values.tolist()[i]),
-                                gamma_f_E=float(df['gamma_f_E'].values.tolist()[i]),gamma_f_DSS=float(df['gamma_f_DSS'].values.tolist()[i]),
-                                su_A_ref=float(df['su_A_ref'].values.tolist()[i]),zref=float(df['zref'].values.tolist()[i]),
-                                suA_inc=float(df['suA_inc'].values.tolist()[i]),suP_suA=float(df['suP/suA'].values.tolist()[i]),
-                                tau0_suA=float(df['tau0/suA'].values.tolist()[i]),suDSS_suA=float(df['suDSS/suA'].values.tolist()[i])))
+        sPropList.append(dict(t=float(df['t_i'].dropna().values.tolist()[i]),Constitutive=str(df['Constitutive_model'].dropna().values.tolist()[i]),Interface_constitutive=str(df['Interface_model'].dropna().values.tolist()[i]),Eoed=float(df['E_oed'].dropna().values.tolist()[i]),
+                                E50=float(df['E_50'].dropna().values.tolist()[i]), 
+                                E=float(df['E_ur'].dropna().values.tolist()[i]),
+                                m=float(df['m'].dropna().values.tolist()[i]), nu=float(df['v_i'].dropna().values.tolist()[i]),
+        						c=float(df['c_i'].dropna().values.tolist()[i]), gamma07=float(df['gamma07'].dropna().values.tolist()[i]),
+                                G0ref=float(df['G0'].dropna().values.tolist()[i]), 
+                                phi=float(df['phi_i'].dropna().values.tolist()[i]), dref=float(df['d_ref'].dropna().values.tolist()[i]), psi=float(df['psi'].dropna().values.tolist()[i]),
+                                cinc=float(df['c_inc_i'].dropna().values.tolist()[i]), gamma=float(df['gamma'].dropna().values.tolist()[i]),
+                                K0=float(df['K0'].dropna().values.tolist()[i]), Ri=float(df['R_inter_i'].dropna().values.tolist()[i]), OCR=float(df['OCR'].dropna().values.tolist()[i]),
+                                Drainage=float(df['Drainage'].dropna().values.tolist()[i]),Dilation=float(df['dilation cut-off'].dropna().values.tolist()[i]),
+                                e0=float(df['e0'].dropna().values.tolist()[i]),emin=float(df['emin'].dropna().values.tolist()[i]),emax=float(df['emax'].dropna().values.tolist()[i]),
+                                                         
+                                G0_suA=float(df['G0/suA'].dropna().values.tolist()[i]),Gur_suA=float(df['Gur/suA'].dropna().values.tolist()[i]),gamma_f_C=float(df['gamma_f_C'].dropna().values.tolist()[i]),
+                                gamma_f_E=float(df['gamma_f_E'].dropna().values.tolist()[i]),gamma_f_DSS=float(df['gamma_f_DSS'].dropna().values.tolist()[i]),
+                                su_A_ref=float(df['su_A_ref'].dropna().values.tolist()[i]),zref=float(df['zref'].dropna().values.tolist()[i]),
+                                suA_inc=float(df['suA_inc'].dropna().values.tolist()[i]),suP_suA=float(df['suP/suA'].dropna().values.tolist()[i]),
+                                tau0_suA=float(df['tau0/suA'].dropna().values.tolist()[i]),suDSS_suA=float(df['suDSS/suA'].dropna().values.tolist()[i])))
+        
+                                
     
     for i in range(len(df['t_i'].values.tolist())):    
         if round(soil_layers[i]-float(df['t_i'].values.tolist()[i]),2)>-float(df['buried length'][0]):
@@ -83,4 +88,4 @@ def getInfo(df):
             thickness_layers.append(round(-df['bot_thickness'].values.tolist()[i],2))
     
    
-    return pPropDict, seaLevel, forceDict, DispDict, sPropList, soil_layers, pile_thickness, thickness_layers, global_scour, local_scour
+    return pPropDict, seaLevel, forceDict, DispDict, sPropList, soil_layers, pile_thickness, thickness_layers, global_scour, local_scour, SLS_load, mesh_coarseness

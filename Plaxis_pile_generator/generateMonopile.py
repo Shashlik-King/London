@@ -61,8 +61,8 @@ def generateMono(df):
                 except:
                     print("Could not set: {}".format(param_name))
     
-        return material	
-    	
+        return material    
+        
     seaBedLevel = 0
     nuSteel = 0.3
     gammaSteel = 0
@@ -71,8 +71,8 @@ def generateMono(df):
     eps = 1e-5
     nStepsPYCurve = 20
 
-    pileProp, waterLevel, force, displacement, soilProp,soil_layers,pile_thickness, thickness_layers, global_scour, local_scour = getInput.getInfo(df)
-    print(pileProp, waterLevel, force, displacement, soilProp, soil_layers,pile_thickness, thickness_layers, global_scour, local_scour)
+    pileProp, waterLevel, force, displacement, soilProp,soil_layers,pile_thickness, thickness_layers, global_scour, local_scour, SLS_load, mesh_coarseness = getInput.getInfo(df)
+    print(pileProp, waterLevel, force, displacement, soilProp, soil_layers,pile_thickness, thickness_layers, global_scour, local_scour,SLS_load, mesh_coarseness)
     
     #
     # Start a new project
@@ -119,6 +119,7 @@ def generateMono(df):
                           ("Rinter", prop['Ri']),
                           ("K0Determination", 0),
                           ("K0Primary", prop['K0']),
+                          ("OCR", prop['OCR']),
                           ("K0PrimaryIsK0Secondary", True),
                           ("K0nc", 1 - math.sin(math.radians(prop['phi']))),
                           ("phi", prop['phi']),
@@ -142,6 +143,7 @@ def generateMono(df):
                           ("Rinter", prop['Ri']),
                           ("K0Determination", 0),
                           ("K0Primary", prop['K0']),
+                          ("OCR", prop['OCR']),
                           ("K0PrimaryIsK0Secondary", True),
                           ("K0nc", 1 - math.sin(math.radians(prop['phi']))),
                           ("phi", prop['phi']),
@@ -149,13 +151,15 @@ def generateMono(df):
                           ("DilatancyCutOff", True),
                           ("einit", prop['e0']),
                           ("emin", prop['emin']),
-                          ("emax",prop['emax'])]  
+                          ("emax",prop['emax'])]
         elif prop['Constitutive']== "NGI_ADP":  
             if prop['Drainage'] == 1:
                 drainageType = "Undrained C"  
             elif prop['Drainage'] == 0:   
-                drainageType = "Drained" 
-
+                drainageType = "Undrained C" 
+            else:
+                drainageType = "Undrained C"
+                
             params = [("MaterialName", "Soil_"+str(i)), 
                           ("SoilModel", 9),
                           ("DrainageType", drainageType),
@@ -165,9 +169,9 @@ def generateMono(df):
                           ("ReferenceShearStrength", prop['su_A_ref']),
                           ("AxialFailureStrainTriaxialCompression", prop['gamma_f_C']),
                           ("AxialFailureStrainTriaxialExtension", prop['gamma_f_E']),
-                          ("UnloadingShearStiffness", prop['Gur_suA']),
+                          ("UnloadingShearStiffness", prop['G0_suA']),
                           ("ShearFailureStrainDirectSimpleShear", prop['gamma_f_DSS']),
-                          ("nu", prop['nu']),
+                          ("nu", 0.495),
                           ("RelativeDirectShearStrength", prop['suDSS_suA']),
                           ("InitialMobilization", prop['tau0_suA']),
                           ("RelativePassiveStrength", prop['suP_suA']),
@@ -175,7 +179,8 @@ def generateMono(df):
                           ("K0Determination", 0),
                           ("K0Primary", prop['K0']),
                           ("K0PrimaryIsK0Secondary", True),
-                          (" verticalref", prop['zref'])]                  
+                          (" verticalref", prop['zref'])]
+                          
         i = i + 1
         make_soilmat(g_i,params)
     
@@ -194,11 +199,14 @@ def generateMono(df):
         g_i.setsoillayerlevel(firstBorehole, i+1, -depth )
         g_i.setmaterial(g_i.Soils[-1], g_i.Materials[i])
         i = i + 1
-    #    
+    # 
+    # Setting unloading soils
+    
+  
     # Setting interface soils
     # 
     layer_thickness=[0]
-    interfaceProp=soilProp.copy()
+    interfaceProp=deepcopy(soilProp)
     for i in range(len(interfaceProp)):
         interfaceProp[i]['c']=interfaceProp[i]['c']*interfaceProp[i]['Ri']
         interfaceProp[i]['cinc']=interfaceProp[i]['cinc']*interfaceProp[i]['Ri']
@@ -213,13 +221,14 @@ def generateMono(df):
         interfaceProp[i]['Ri']=1
     i = 1
     for prop in interfaceProp:
-        if prop['Constitutive']== "HSsmall":
+        if prop['Interface_constitutive']== "HSsmall":
             if prop['Drainage'] == 1:
-                drainageType = "Undrained B"
-            elif prop['Drainage'] == 2:
-                drainageType = "Undrained A"			
-            else:
                 drainageType = "Drained"
+            elif prop['Drainage'] == 2:
+                drainageType = "Drained"            
+            else:
+                drainageType = "Drained"   
+                
             if int(prop['Dilation'])==0:
                 params = [("MaterialName", "Interface_"+str(i)), 
                           ("SoilModel", 4),
@@ -239,6 +248,7 @@ def generateMono(df):
                           ("Rinter", prop['Ri']),
                           ("K0Determination", 0),
                           ("K0Primary", prop['K0']),
+                          ("OCR", prop['OCR']),
                           ("K0PrimaryIsK0Secondary", True),
                           ("phi", prop['phi']),
                           ("K0nc", 1 - math.sin(math.radians(prop['phi']))),
@@ -262,6 +272,7 @@ def generateMono(df):
                           ("Rinter", prop['Ri']),
                           ("K0Determination", 0),
                           ("K0Primary", prop['K0']),
+                          ("OCR", prop['OCR']),
                           ("K0PrimaryIsK0Secondary", True),
                           ("phi", prop['phi']),
                           ("K0nc", 1 - math.sin(math.radians(prop['phi']))),
@@ -270,12 +281,14 @@ def generateMono(df):
                           ("einit", prop['e0']),
                           ("emin", prop['emin']),
                           ("emax",prop['emax'])] 
-        elif prop['Constitutive']== "NGI_ADP":  
+        elif prop['Interface_constitutive']== "NGI_ADP":  
             if prop['Drainage'] == 1:
                 drainageType = "Undrained C"  
             elif prop['Drainage'] == 0:   
-                drainageType = "Drained" 
-
+                drainageType = "Undrained C" 
+            else:
+                drainageType = "Undrained C"
+                
             params = [("MaterialName", "Interface_"+str(i)), 
                           ("SoilModel", 9),
                           ("DrainageType", drainageType),
@@ -285,9 +298,9 @@ def generateMono(df):
                           ("ReferenceShearStrength", prop['su_A_ref']),
                           ("AxialFailureStrainTriaxialCompression", prop['gamma_f_C']),
                           ("AxialFailureStrainTriaxialExtension", prop['gamma_f_E']),
-                          ("UnloadingShearStiffness", prop['Gur_suA']),
+                          ("UnloadingShearStiffness", prop['G0_suA']),
                           ("ShearFailureStrainDirectSimpleShear", prop['gamma_f_DSS']),
-                          ("nu", prop['nu']),
+                          ("nu", 0.495),
                           ("RelativeDirectShearStrength", prop['suDSS_suA']),
                           ("InitialMobilization", prop['tau0_suA']),
                           ("RelativePassiveStrength", prop['suP_suA']),
@@ -298,6 +311,197 @@ def generateMono(df):
                           (" verticalref", prop['zref'])]  
         i = i + 1
         make_soilmat(g_i,params)
+        
+    if int(df['Unloading'][0])==1:
+        
+        i = 1
+        UnloadProp=deepcopy(soilProp)
+        for prop in UnloadProp:
+            if prop['Constitutive']== "HSsmall":
+                if prop['Drainage'] == 1:
+                    drainageType = "Undrained B"
+                elif prop['Drainage'] == 2:
+                    drainageType = "Undrained A"
+                else:
+                    drainageType = "Drained"
+                    
+                if int(prop['Dilation'])==0:
+                    params = [("MaterialName", "Soil_Unloading_"+str(i)), 
+                              ("SoilModel", 4),
+                              ("DrainageType", drainageType),
+                              ("gammaUnsat", prop['gamma']),
+                              ("gammaSat", prop['gamma']),
+                              ("Gref", prop['E']/2/(1+prop['nu'])),
+                              ("E50ref", prop['E50']),
+                              ("EoedRef", prop['Eoed']),
+                              ("powerm", prop['m']),
+                              ("G0ref", prop['G0ref']),
+                              ("gamma07", prop['gamma07']),
+                              ("nu", prop['nu']),
+                              ("cref", prop['c']),
+                              ("cinc", prop['cinc']),
+                              ("verticalref", prop['dref']),
+                              ("Rinter", prop['Ri']),
+                              ("K0Determination", 0),
+                              ("K0Primary", prop['K0']),
+                              ("OCR", prop['OCR']),
+                              ("K0PrimaryIsK0Secondary", True),
+                              ("K0nc", 1 - math.sin(math.radians(prop['phi']))),
+                              ("phi", prop['phi']),
+                              ("psi", prop['psi'])]
+                else:
+                    params = [("MaterialName", "Soil_Unloading_"+str(i)), 
+                              ("SoilModel", 4),
+                              ("DrainageType", drainageType),
+                              ("gammaUnsat", prop['gamma']),
+                              ("gammaSat", prop['gamma']),
+                              ("Gref", prop['E']/2/(1+prop['nu'])),
+                              ("E50ref", prop['E50']),
+                              ("EoedRef", prop['Eoed']),
+                              ("powerm", prop['m']),
+                              ("G0ref", prop['G0ref']),
+                              ("gamma07", prop['gamma07']),
+                              ("nu", 0.495),
+                              ("cref", prop['c']),
+                              ("cinc", prop['cinc']),
+                              ("verticalref", prop['dref']),
+                              ("Rinter", prop['Ri']),
+                              ("K0Determination", 0),
+                              ("K0Primary", prop['K0']),
+                              ("OCR", prop['OCR']),
+                              ("K0PrimaryIsK0Secondary", True),
+                              ("K0nc", 1 - math.sin(math.radians(prop['phi']))),
+                              ("phi", prop['phi']),
+                              ("psi", prop['psi']),
+                              ("DilatancyCutOff", True),
+                              ("einit", prop['e0']),
+                              ("emin", prop['emin']),
+                              ("emax",prop['emax'])]  
+            elif prop['Constitutive']== "NGI_ADP":  
+                if prop['Drainage'] == 1:
+                    drainageType = "Undrained C"  
+                elif prop['Drainage'] == 0 :   
+                    drainageType = "Undrained C" 
+                else:
+                    drainageType = "Undrained C"
+                
+                params = [("MaterialName", "Soil_Unloading_"+str(i)), 
+                              ("SoilModel", 9),
+                              ("DrainageType", drainageType),
+                              ("gammaUnsat", prop['gamma']),
+                              ("gammaSat", prop['gamma']),
+                              ("IncreaseOfShearStrengthWithVerticalRef", prop['suA_inc']),
+                              ("ReferenceShearStrength", prop['su_A_ref']),
+                              ("AxialFailureStrainTriaxialCompression", prop['gamma_f_C']),
+                              ("AxialFailureStrainTriaxialExtension", prop['gamma_f_E']),
+                              ("UnloadingShearStiffness", prop['Gur_suA']),
+                              ("ShearFailureStrainDirectSimpleShear", prop['gamma_f_DSS']),
+                              ("nu", prop['nu']),
+                              ("RelativeDirectShearStrength", prop['suDSS_suA']),
+                              ("InitialMobilization", prop['tau0_suA']),
+                              ("RelativePassiveStrength", prop['suP_suA']),
+                              ("Rinter", prop['Ri']),
+                              ("K0Determination", 0),
+                              ("K0Primary", prop['K0']),
+                              ("K0PrimaryIsK0Secondary", True),
+                              (" verticalref", prop['zref'])]
+                              
+            i = i + 1
+            make_soilmat(g_i,params)
+        
+        i = 1
+        UnloadInterfaceProp=deepcopy(interfaceProp)
+        for prop in UnloadInterfaceProp:
+            if prop['Interface_constitutive']== "HSsmall":
+                if prop['Drainage'] == 1:
+                    drainageType = "Undrained B"
+                elif prop['Drainage'] == 2:
+                    drainageType = "Undrained A"            
+                else:
+                    drainageType = "Drained"
+                if int(prop['Dilation'])==0:
+                    params = [("MaterialName", "Interface_Unloading_"+str(i)), 
+                              ("SoilModel", 4),
+                              ("DrainageType", drainageType),
+                              ("gammaUnsat", prop['gamma']),
+                              ("gammaSat", prop['gamma']),
+                              ("Gref", prop['E']/2/(1+prop['nu'])),
+                              ("E50ref", prop['E50']),
+                              ("EoedRef", prop['Eoed']),
+                              ("powerm", prop['m']),
+                              ("G0ref", prop['G0ref']),
+                              ("gamma07", prop['gamma07']),
+                              ("nu", prop['nu']),
+                              ("cref", prop['c']),
+                              ("cinc", prop['cinc']),
+                              ("verticalref", prop['dref']),
+                              ("Rinter", prop['Ri']),
+                              ("K0Determination", 0),
+                              ("K0Primary", prop['K0']),
+                              ("OCR", prop['OCR']),
+                              ("K0PrimaryIsK0Secondary", True),
+                              ("phi", prop['phi']),
+                              ("K0nc", 1 - math.sin(math.radians(prop['phi']))),
+                              ("psi", prop['psi'])]
+                else:
+                    params = [("MaterialName", "Interface_Unloading_"+str(i)), 
+                              ("SoilModel", 4),
+                              ("DrainageType", drainageType),
+                              ("gammaUnsat", prop['gamma']),
+                              ("gammaSat", prop['gamma']),
+                              ("Gref", prop['E']/2/(1+prop['nu'])),
+                              ("E50ref", prop['E50']),
+                              ("EoedRef", prop['Eoed']),
+                              ("powerm", prop['m']),
+                              ("G0ref", prop['G0ref']),
+                              ("gamma07", prop['gamma07']),
+                              ("nu", prop['nu']),
+                              ("cref", prop['c']),
+                              ("cinc", prop['cinc']),
+                              ("verticalref", prop['dref']),
+                              ("Rinter", prop['Ri']),
+                              ("K0Determination", 0),
+                              ("OCR", prop['OCR']),
+                              ("K0Primary", prop['K0']),
+                              ("K0PrimaryIsK0Secondary", True),
+                              ("phi", prop['phi']),
+                              ("K0nc", 1 - math.sin(math.radians(prop['phi']))),
+                              ("psi", prop['psi']),
+                              ("DilatancyCutOff", True),
+                              ("einit", prop['e0']),
+                              ("emin", prop['emin']),
+                              ("emax",prop['emax'])] 
+            elif prop['Interface_constitutive']== "NGI_ADP":  
+                if prop['Drainage'] == 1:
+                    drainageType = "Undrained C"  
+                elif prop['Drainage'] == 0:   
+                    drainageType = "Undrained C" 
+                else:   
+                    drainageType = "Undrained C"                     
+
+                params = [("MaterialName", "Interface_Unloading_"+str(i)), 
+                              ("SoilModel", 9),
+                              ("DrainageType", drainageType),
+                              ("gammaUnsat", prop['gamma']),
+                              ("gammaSat", prop['gamma']),
+                              ("IncreaseOfShearStrengthWithVerticalRef", prop['suA_inc']),
+                              ("ReferenceShearStrength", prop['su_A_ref']),
+                              ("AxialFailureStrainTriaxialCompression", prop['gamma_f_C']),
+                              ("AxialFailureStrainTriaxialExtension", prop['gamma_f_E']),
+                              ("UnloadingShearStiffness", prop['Gur_suA']),
+                              ("ShearFailureStrainDirectSimpleShear", prop['gamma_f_DSS']),
+                              ("nu", 0.495),
+                              ("RelativeDirectShearStrength", prop['suDSS_suA']),
+                              ("InitialMobilization", prop['tau0_suA']),
+                              ("RelativePassiveStrength", prop['suP_suA']),
+                              ("Rinter", prop['Ri']),
+                              ("K0Determination", 0),
+                              ("K0Primary", prop['K0']),
+                              ("K0PrimaryIsK0Secondary", True),
+                              (" verticalref", prop['zref'])]  
+            i = i + 1
+            make_soilmat(g_i,params)
+        
     layer_thickness.remove(0)
     
     # STRUCTURES
@@ -355,7 +559,7 @@ def generateMono(df):
     for i in range(len(soil_layers)):
         g_i.arrayr(topSurface, 2, 0, 0, -L+l+soil_layers[i])
         
-    pileProp, waterLevel, force, displacement, soilProp,soil_layers,pile_thickness, thickness_layers, global_scour, local_scour = getInput.getInfo(df)
+    pileProp, waterLevel, force, displacement, soilProp,soil_layers,pile_thickness, thickness_layers, global_scour, local_scour,SLS_load, mesh_coarseness= getInput.getInfo(df)
     #
     # Features: plate, interfaces and rigid bodies
     g_i.posinterface(lateralSurface)
@@ -454,7 +658,7 @@ def generateMono(df):
     #
     g_i.gotomesh()
     for volume in g_i.Volumes:
-        volume.CoarsenessFactor = 0.25
+        volume.CoarsenessFactor = mesh_coarseness[0];
     g_i.mesh(0.05, 256, True) 
     
     if int(df['State_var'][0])==1:
@@ -467,7 +671,7 @@ def generateMono(df):
     # STAGED CONSTRUCTION  
     #
     g_i.gotostages()
-    #	
+    #    
     # Initial phase: K0 procedure
     g_i.deactivate(g_i.Plates, g_i.InitialPhase)
     g_i.deactivate(g_i.Interfaces, g_i.InitialPhase)
@@ -558,6 +762,8 @@ def generateMono(df):
             if max(x1,x2) > D:
                 
                 g_i.deactivate(soils, dummy)
+                
+    # Phase3: Scour
             
 # =============================================================================
 #     dummy2 = g_i.phase(dummy)
@@ -580,6 +786,9 @@ def generateMono(df):
 #                     g_i.deactivate(soils, dummy2)
 # =============================================================================
 # =============================================================================
+
+    # Phase4: Horizontal loading until Displacement D/10,000
+    
     hmloadingphase = g_i.phase(dummy)
     g_i.setcurrentphase(hmloadingphase)
     hmloadingphase.Deform.ResetDisplacementsToZero = True
@@ -588,9 +797,9 @@ def generateMono(df):
     hmloadingphase.Deform.UseDefaultIterationParams = False
     hmloadingphase.Deform.MaxLoadFractionPerStep = (1./nStepsPYCurve)
     for rb in g_i.Rigidbodies:
-        rb.ux[hmloadingphase] = (displacement['Disp_phase_1']*(pileProp['L']-(pileProp['l']/3)))/((2/3)*pileProp['l'])	#Applying displacement at top of the rigid body in order to obtain the input prescribed displacements at mudline
+        rb.ux[hmloadingphase] = (displacement['Disp_phase_1']*(pileProp['L']-(pileProp['l']/3)))/((2/3)*pileProp['l'])    #Applying displacement at top of the rigid body in order to obtain the input prescribed displacements at mudline
     
-    # Phase4: Horizontal loading until Displacement D/10
+    # Phase5: Horizontal loading until Displacement D/10
     hmloadingphase2 = g_i.phase(dummy)
     g_i.setcurrentphase(hmloadingphase2)
     hmloadingphase2.Deform.ResetDisplacementsToZero = True
@@ -602,9 +811,75 @@ def generateMono(df):
     hmloadingphase2.Deform.MaxLoadFractionPerStep = (1./nStepsPYCurve)
 
     for rb in g_i.Rigidbodies:
-        rb.ux[hmloadingphase2] = (displacement['Disp_phase_2']*(pileProp['L']-(pileProp['l']/3)))/((2/3)*pileProp['l'])	#Applying displacement at top of the rigid body in order to obtain the input prescribed displacements at mudline
+        rb.ux[hmloadingphase2] = (displacement['Disp_phase_2']*(pileProp['L']-(pileProp['l']/3)))/((2/3)*pileProp['l'])    #Applying displacement at top of the rigid body in order to obtain the input prescribed displacements at mudline
     
-    #
+    
+    if int(df['Unloading'][0])==1:
+        
+    # Phase6: SLS loading   
+        
+        SLSloadingphase = g_i.phase(dummy)
+        g_i.setcurrentphase(SLSloadingphase)
+        SLSloadingphase.Deform.ResetDisplacementsToZero = True
+        SLSloadingphase.MaxStepsStored = hmloadingphase.Deform.MaxSteps
+        SLSloadingphase.Identification = "SLS_Loading"
+        SLSloadingphase.Deform.UseDefaultIterationParams = False
+        SLSloadingphase.Deform.MaxLoadFractionPerStep = (1./nStepsPYCurve)
+        
+        for rb in g_i.Rigidbodies:
+            rb.TranslationConditionx[SLSloadingphase]= "Force"
+            rb.Fx[SLSloadingphase]= SLS_load[0]
+
+    # Phase7: SLS Unloading 
+            
+        SLSunloadingphase = g_i.phase(SLSloadingphase)
+        g_i.setcurrentphase(SLSunloadingphase)
+        SLSunloadingphase.MaxStepsStored = hmloadingphase.Deform.MaxSteps
+        SLSunloadingphase.Identification = "SLS_Unloading"
+        SLSunloadingphase.Deform.UseDefaultIterationParams = False
+        SLSunloadingphase.Deform.MaxLoadFractionPerStep = (1./nStepsPYCurve)
+        
+        for rb in g_i.Rigidbodies:
+            rb.Fx[SLSunloadingphase]= 0
+            
+        for soils in g_i.Soils:
+            strBB = soils.Parent.BoundingBox.value
+
+            z1 = float(strBB.split(';')[2].split(')')[0])
+            z2 = float(strBB.split(';')[4].split(')')[0])
+            x1 = float(strBB.split(';')[0].split('(')[1])
+            x2 = float(strBB.split(';')[2].split('(')[1])
+            y1 = float(strBB.split(';')[1])
+            y2 = float(strBB.split(';')[3])
+            
+            j=0
+            while (z1+z2)/2<layer_thickness[j]:
+                j=j+1
+            
+            g_i.set(soils.Material, (SLSunloadingphase), g_i.Materials[j+2*len(interfaceProp)])
+            
+
+        # Sets interface materials instead of default adjacent soil properties       
+        for interface in g_i.NegativeInterface_1:
+            strBB = interface.Parent.BoundingBox.value
+            z1 = float(strBB.split(';')[2].split(')')[0])
+            z2 = float(strBB.split(';')[4].split(')')[0])
+            if max(z1,z2) <= 0:
+                j = 0
+                while min(z1,z2) < layer_thickness[j]:
+                    j=j+1
+                interface.Material[SLSunloadingphase] = g_i.Materials[j+3*len(interfaceProp)]   
+        for interface in g_i.PositiveInterface_1:
+            strBB = interface.Parent.BoundingBox.value
+            z1 = float(strBB.split(';')[2].split(')')[0])
+            z2 = float(strBB.split(';')[4].split(')')[0])
+            if max(z1,z2) <= 0:
+                j = 0
+                while min(z1,z2) < layer_thickness[j]:
+                    j=j+1
+                interface.Material[SLSunloadingphase] = g_i.Materials[j+3*len(interfaceProp)] 
+    
+    
     # Group creation for output
     listLateralInterfaces = []
     listBottomInterfaces = []
@@ -1163,26 +1438,26 @@ def resultPostProcessing(df,results_directory):
     def mtValues(nodalForces,nodalForces_v, nodalUX, nodalUZ, Xcoord, connec, slices, numberOfSlice):
     
         """
-		Args:
-			nodalForces (dict):   
-						keys (int)    : Element number
-						values (list) : Element nodal forces
-			nodalUX (dict):   
-						keys (int)    : Node number
-						values (float): X-Displacement
-			nodalUZ (dict):   
-						keys (int)    : Node number
-						values (float): Z-Displacement
-			connec (dict):        
-						keys (int)    : Element number
-						values (list) : Element connectivity
-			slices (dict):        
-						keys (int)    : Slice number
-						values (list) : Element connectivity
-			numberOfSlice (int)       : Number of relevant slices
-		Returns:
-			lists: Corresponding M and theta values for each buried slice
-		"""
+        Args:
+            nodalForces (dict):   
+                        keys (int)    : Element number
+                        values (list) : Element nodal forces
+            nodalUX (dict):   
+                        keys (int)    : Node number
+                        values (float): X-Displacement
+            nodalUZ (dict):   
+                        keys (int)    : Node number
+                        values (float): Z-Displacement
+            connec (dict):        
+                        keys (int)    : Element number
+                        values (list) : Element connectivity
+            slices (dict):        
+                        keys (int)    : Slice number
+                        values (list) : Element connectivity
+            numberOfSlice (int)       : Number of relevant slices
+        Returns:
+            lists: Corresponding M and theta values for each buried slice
+        """
         nNode = 6
         M = [0 for m in range(numberOfSlice)]   
         T = [0 for m in range(numberOfSlice)]
@@ -1192,7 +1467,7 @@ def resultPostProcessing(df,results_directory):
                 for n in range(nNode):
                     k = 3*n
                     M[sliceNumber] = M[sliceNumber] + 2*((nodalForces[element][k+2]-nodalForces_v[element][k+2])*(Xcoord[connec[element][n]][0]))  # factor 2 due to symmetry         #summatory of all the moments along the y-axis from nodes belonging to elements which are in the same slide
-					
+                    
                     xcoord_node = Xcoord[connec[element][n]][0]                               #filtering nodes on the x-axes (D=4 or D=-4) in order to caltulate rotation
                     if (xcoord_node == (pileProp['D']/2) or xcoord_node == -(pileProp['D']/2)):
                         T[sliceNumber] = T[sliceNumber] + (math.atan((nodalUZ[connec[element][n]][0])/(nodalUX[connec[element][n]][0]+xcoord_node)))                      
@@ -1221,24 +1496,24 @@ def resultPostProcessing(df,results_directory):
     Curves = int(df['Soil reaction curves'][0])
     
     # Reading some input data that will be used during post-processing
-    pileProp, waterLevel, force, displacement, soilProp,soil_layers,pile_thickness, thickness_layers, global_scour, local_scour = getInput.getInfo(df)
+    pileProp, waterLevel, force, displacement, soilProp,soil_layers,pile_thickness, thickness_layers, global_scour, local_scour, SLS_loading, mesh_coarseness = getInput.getInfo(df)
     if (-pileProp['l']) in soil_layers:
         soil_layers.remove(-pileProp['l'])
 #    soil_layers.sort(reverse=False)
     
     # Primary check on the orientation of the interface as the information cannot be retrieved in an Output script
-    if not properOrientation(g_i): 																#calling function for checking orientation of axis 1 pointing upwards, if not ok, script will stop
+    if not properOrientation(g_i):                                                                 #calling function for checking orientation of axis 1 pointing upwards, if not ok, script will stop
         print("Surface over which integration has to be performed should have local axis 1 pointing along z positive")
         sys.exit()
     
     # Retrieve nodes and stress points coordinates along with element connectivity for both lateral and bottom interfaces
-    D_10 = g_o.Phases[-1]
-    D_200 = g_o.Phases[-2]
+    D_10 = g_o.Phases[5]
+    D_200 = g_o.Phases[4]
     
     intResults = g_o.ResultTypes.Interface
     print("Fetching interface element numbers, node numbers and coordinates")
     for group in g_o.Groups:
-        if group.Name.value == "BottomInterfaces": 												#identify the nodes at bottom interfaces through naming properly the interface "Bottom Interfaces", see script building monopile.
+        if group.Name.value == "BottomInterfaces":                                                 #identify the nodes at bottom interfaces through naming properly the interface "Bottom Interfaces", see script building monopile.
             bottomNodX       = g_o.getresults(group, D_10, intResults.X, 'node')
             bottomNodY       = g_o.getresults(group, D_10, intResults.Y, 'node')
             bottomNodZ       = g_o.getresults(group, D_10, intResults.Z, 'node')
@@ -1321,155 +1596,224 @@ def resultPostProcessing(df,results_directory):
     Mstage2  = []
     Mstage_points_curve1_all = []
     Mstage_points_curve2_all = []
-    Mstage_target1=[0.004,0.01,0.02,0.03,0.04,0.05,0.06,0.08,0.1,0.15,0.2,0.3,0.4,0.6,0.8,1] 										# target MStage points where we want results (Phase D/200)
-    Mstage_target2=[0.004,0.01,0.02,0.03,0.04,0.05,0.06,0.07,0.08,0.09,0.1,0.12,0.15,0.175,0.2,0.25,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1]  # target MStage points where we want results (Phase D/10)
+    Mstage_target1=[0.004,0.01,0.02,0.03,0.04,0.05,0.06,0.08,0.1,0.15,0.2,0.3,0.4,0.6,0.8,1]                                    # target MStage points where we want results (Phase D/200)
+    Mstage_target2=[0.004,0.01,0.02,0.03,0.04,0.05,0.06,0.07,0.08,0.09,0.1,0.12,0.15,0.175,0.2,0.25,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1] #      target MStage points where we want results (Phase D/10)
 
     
     for step in D_200.Steps:
         Mstage1.append(step.Reached.SumMstage.value)
     for m in range(len(Mstage_target1)):  
-    	Mstage_points_curve1_all.append(min(range(len(Mstage1)), key=lambda i: abs(Mstage1[i]-Mstage_target1[m])))
+        Mstage_points_curve1_all.append(min(range(len(Mstage1)), key=lambda i: abs(Mstage1[i]-Mstage_target1[m])))
     Mstage_points_curve1 = unique(Mstage_points_curve1_all)    
     print('The steps at which curve points will extracted for phase D/200 are ',Mstage_points_curve1)
     
     for step in D_10.Steps:
         Mstage2.append(step.Reached.SumMstage.value)
     for m in range(len(Mstage_target2)):  
-    	Mstage_points_curve2_all.append(min(range(len(Mstage2)), key=lambda i: abs(Mstage2[i]-Mstage_target2[m])))
+        Mstage_points_curve2_all.append(min(range(len(Mstage2)), key=lambda i: abs(Mstage2[i]-Mstage_target2[m])))
     Mstage_points_curve2= unique(Mstage_points_curve2_all) 
     print('The steps at which curve points will extracted for phase D/10 are ',Mstage_points_curve2)
     #################################################################################################
-	#                       Forces at the the end fo vertical loading phase                         #
-	#################################################################################################
+    #                       Forces at the the end fo vertical loading phase                         #
+    #################################################################################################
 
-    V_phase = g_o.Phases[-3]
+    V_phase = g_o.Phases[3]
 
     for group in g_o.Groups:
-    	if group.Name.value == "BottomInterfaces":
-    		bottomNodalSigTot_v  = g_o.getresults(group, V_phase, intResults.InterfaceEffectiveNormalStress, 'node')
-    		bottomTau1_v         = g_o.getresults(group, V_phase, intResults.InterfaceShearStress, 'stresspoint')
-    		bottomTau2_v         = g_o.getresults(group, V_phase, intResults.InterfaceShearStress2, 'stresspoint')
-    	if group.Name.value == "LateralInterfaces":
-    		lateralNodalSigTot_v = g_o.getresults(group, V_phase, intResults.InterfaceTotalNormalStress, 'node')
-    		lateralTau1_v        = g_o.getresults(group, V_phase, intResults.InterfaceShearStress, 'stresspoint')
-    		lateralTau2_v        = g_o.getresults(group, V_phase, intResults.InterfaceShearStress2, 'stresspoint')		
+        if group.Name.value == "BottomInterfaces":
+            bottomNodalSigTot_v  = g_o.getresults(group, V_phase, intResults.InterfaceEffectiveNormalStress, 'node')
+            bottomTau1_v         = g_o.getresults(group, V_phase, intResults.InterfaceShearStress, 'stresspoint')
+            bottomTau2_v         = g_o.getresults(group, V_phase, intResults.InterfaceShearStress2, 'stresspoint')
+        if group.Name.value == "LateralInterfaces":
+            lateralNodalSigTot_v = g_o.getresults(group, V_phase, intResults.InterfaceTotalNormalStress, 'node')
+            lateralTau1_v        = g_o.getresults(group, V_phase, intResults.InterfaceShearStress, 'stresspoint')
+            lateralTau2_v        = g_o.getresults(group, V_phase, intResults.InterfaceShearStress2, 'stresspoint')        
 
-	# Stored fetched results in dictionnaries to provide data structure
+    # Stored fetched results in dictionnaries to provide data structure
     bottomTauSLocal_v       = getResultsPerElement(bottomElementID, bottomTau1_v, 6)
     bottomTauTLocal_v       = getResultsPerElement(bottomElementID, bottomTau2_v, 6)
     bottomNodalSigNLocal_v  = getResultsPerElement(bottomElementID, bottomNodalSigTot_v, 6)
     lateralTauSLocal_v      = getResultsPerElement(lateralElementID, lateralTau1_v, 6)
     lateralTauTLocal_v      = getResultsPerElement(lateralElementID, lateralTau2_v, 6)
-    lateralNodalSigNLocal_v = getResultsPerElement(lateralElementID, lateralNodalSigTot_v, 6)				
+    lateralNodalSigNLocal_v = getResultsPerElement(lateralElementID, lateralNodalSigTot_v, 6)                
     bottomSigNLocal_v  = interpolate(bottomNodalSigNLocal_v)
     lateralSigNLocal_v = interpolate(lateralNodalSigNLocal_v)
 
-	# Calculating global nodal forces for interface elements
+    # Calculating global nodal forces for interface elements
     localAxis2 = [1, 0, 0]
     bottomGlobalNodalForces_v  = calculateNodalForces(bottomSigNLocal_v, bottomTauSLocal_v, bottomTauTLocal_v, bottomJacobian, bottomNormal, localAxis2)
     localAxis2 = [0, 0, 1]
     lateralGlobalNodalForces_v = calculateNodalForces(lateralSigNLocal_v, lateralTauSLocal_v, lateralTauTLocal_v, lateralJacobian, lateralNormal, localAxis2)
 
     #################################################################################################
-	#                                       Axial calculation                                       #
-	#################################################################################################
-    os.chdir(results_directory)
+    #                               SLS Loading - Unloading calculation                             #
+    #################################################################################################
+    if int(df['Unloading'][0])==1:
+        SLS_loading = g_o.Phases[6]
+        SLS_unloading = g_o.Phases[7]
+        
+        Mstage_SLS_loading  = []
+        Mstage_SLS_unloading  = []
+        Mstage_points_curve3_all = []
+        Mstage_points_curve4_all = []
+        Mstage_target3=[0.004,0.01,0.02,0.03,0.04,0.05,0.06,0.08,0.1,0.15,0.2,0.3,0.4,0.6,0.8,1]                                         # target MStage points where we want results (Phase D/200)
+        Mstage_target4=[0.004,0.01,0.02,0.03,0.04,0.05,0.06,0.08,0.1,0.15,0.2,0.3,0.4,0.6,0.8,1]   # target MStage points where we want results (Phase D/10)
     
-# =============================================================================
-#     workbook1 = xlsxwriter.Workbook('Axial.xlsx')
-#     worksheet1 = workbook1.add_worksheet('D_200')
-#     worksheet2 = workbook1.add_worksheet('D_10')  
-#     
-#     nobold_format = workbook1.add_format({
-#     'border': 1,
-#     'align': 'center',
-#     'valign': 'vcenter'})
-#     
-#     merge_format1 = workbook1.add_format({
-#     'bold': 1,
-#     'border': 1,
-#     'align': 'center',
-#     'valign': 'vcenter',
-#     'fg_color': 'gray'})
-#     
-#     PlateNodZ=[]
-#     intResults2 = g_o.ResultTypes.Plate
-#     
-#     for plate in g_i.Plates:
-#         strBB2 = plate.Parent.BoundingBox.value
-#         z1 = float(strBB2.split(';')[2].split(')')[0])
-#         z2 = float(strBB2.split(';')[4].split(')')[0])
-#         if (z1+z2)/2 <= -global_scour:
-#             PlateNodZ.extend(g_o.getresults(plate, D_10, intResults2.Z, 'node')[:])
-#  
-#     nSteps1 = len(Mstage_points_curve1)
-#     nSteps2 = len(Mstage_points_curve2)        
-#     j=0
-#     for step in (D_200.Steps[t] for t in Mstage_points_curve1):
-#    		print('Processing step #',j+1,' out of ',nSteps1, 'steps, Phase D/200')
-#    		N1list=[]
-#    		Axial=[]
-#    		for plate in g_i.Plates:
-#    		    strBB2 = plate.Parent.BoundingBox.value
-#    		    z1 = float(strBB2.split(';')[2].split(')')[0])
-#    		    z2 = float(strBB2.split(';')[4].split(')')[0])
-#    		    if (z1+z2)/2 <= -global_scour:
-#    		       N1list.extend(g_o.getresults(plate, step , intResults2.N11, 'node')[:])
-#         
-#    		for x in soil_layers2:
-# 
-#    		   indices = [i for i, z in enumerate(PlateNodZ) if abs(abs(z)-abs(x))<0.0001]
-#    		   Axial_aver=sum([N1list[m] for m in indices])/len(indices)  
-#    		   Axial.append(-Axial_aver*3.14*pileProp["D"])        
-#         
-#    		worksheet1.write_column(1, j+1, Axial,nobold_format)   
-#    		worksheet1.write(0, j+1, 2*step.Reached.ForceX.value, merge_format1)
-#   
-#    		j=j+1
-#            
-#     j=0
-#     for step in (D_10.Steps[t] for t in Mstage_points_curve2):
-#    		print('Processing step #',j+1,' out of ',nSteps2, 'steps, Phase D/10')
-#    		N1list=[]
-#    		Axial=[]
-#    		for plate in g_i.Plates:
-#    		    strBB2 = plate.Parent.BoundingBox.value
-#    		    z1 = float(strBB2.split(';')[2].split(')')[0])
-#    		    z2 = float(strBB2.split(';')[4].split(')')[0])
-#    		    if (z1+z2)/2 <= -global_scour:
-#    		       N1list.extend(g_o.getresults(plate, step , intResults2.N11, 'node')[:])
-#         
-#    		for x in soil_layers2:
-# 
-#    		   indices = [i for i, z in enumerate(PlateNodZ) if abs(abs(z)-abs(x))<0.0001]
-#    		   Axial_aver=sum([N1list[m] for m in indices])/len(indices)  
-#    		   Axial.append(-Axial_aver*3.14*pileProp["D"])        
-#         
-#    		worksheet2.write_column(1, j+1, Axial,nobold_format)   
-#    		worksheet2.write(0, j+1, 2*step.Reached.ForceX.value, merge_format1)
-#   
-#    		j=j+1           
-#     worksheet1.write(0, 0, "Depth [m]",merge_format1) 
-#     worksheet1.write_column(1, 0, soil_layers2,nobold_format) 
-#     worksheet2.write(0, 0, "Depth [m]",merge_format1) 
-#     worksheet2.write_column(1, 0, soil_layers2,nobold_format) 
-#     
-#     workbook1.close()
-# =============================================================================
-# =============================================================================
-#             
-#     for group in g_o.Groups:
-#         if group.Name.value == "PlatesLat2": 												#identify the nodes at bottom interfaces through naming properly the interface "Bottom Interfaces", see script building monopile.
-#             PlateNodX      = g_o.getresults(group, D_10, intResults2.X, 'node')[:]
-#             PlateNodY      = g_o.getresults(group, D_10, intResults2.Y, 'node')
-#             PlateNodZ      = g_o.getresults(group, D_10, intResults2.Z, 'node')
-#             PlateIntX      = g_o.getresults(group, D_10, intResults2.X, 'stresspoint')
-#             PlateIntY      = g_o.getresults(group, D_10, intResults2.Y, 'stresspoint')
-#             PlateIntZ      = g_o.getresults(group, D_10, intResults2.Z, 'stresspoint')
-#             PlateNodeID    = g_o.getresults(group, D_10, intResults2.NodeID, 'node')
-#             PlatelElementID = g_o.getresults(group, D_10, intResults2.ElementID, 'node')
-# 
-# =============================================================================
+        
+        for step in SLS_loading:
+            Mstage_SLS_loading.append(step.Reached.SumMstage.value)
+        for m in range(len(Mstage_target3)):  
+            Mstage_points_curve3_all.append(min(range(len(Mstage_SLS_loading)), key=lambda i: abs(Mstage_SLS_loading[i]-Mstage_target3[m])))
+        Mstage_points_curve3 = unique(Mstage_points_curve3_all)    
+        print('The steps at which curve points will extracted for SLS loading phase are ',Mstage_points_curve3)
+        
+        for step in SLS_unloading:
+            Mstage_SLS_unloading.append(step.Reached.SumMstage.value)
+        for m in range(len(Mstage_target4)):  
+            Mstage_points_curve4_all.append(min(range(len(Mstage_SLS_unloading)), key=lambda i: abs(Mstage_SLS_unloading[i]-Mstage_target4[m])))
+        Mstage_points_curve4= unique(Mstage_points_curve4_all) 
+        print('The steps at which curve points will extracted for SLS unloading phase are ',Mstage_points_curve4)
+    
+
+    #-------------------------------- SLS loading --------------------------------#
+    
+        nSteps3 = len(Mstage_points_curve3)
+        workbook1 = xlsxwriter.Workbook('SLS Loading-Unloading.xlsx')
+        worksheet1 = workbook1.add_worksheet('Response at Mudline')
+        bold = workbook1.add_format({'bold': True})
+        worksheet1.set_column('A:C', 25)
+        
+        j=0
+        rot_radiands=[]
+        disp_mudline=[]
+        F_SLS=[]
+        
+        for step in (SLS_loading.Steps[t] for t in Mstage_points_curve3):
+            print('Processing step #',j+1,' out of ',nSteps3, 'steps, SLS loading phase')
+            for group in g_o.Groups:
+                if group.Name.value == "LateralInterfaces":
+                    lateralNodalSigTot = g_o.getresults(group, step, intResults.InterfaceTotalNormalStress, 'node')             #why total and below they are effective?
+                    lateralTau1        = g_o.getresults(group, step, intResults.InterfaceShearStress, 'stresspoint')
+                    lateralTau2        = g_o.getresults(group, step, intResults.InterfaceShearStress2, 'stresspoint')
+                    lateralNodDispX    = g_o.getresults(group, step, intResults.Ux, 'node')
+                    lateralIncDispX    = g_o.getresults(group, step, intResults.IRelUx, 'node')         # relative displacement between the two nodes sharing coordinates (interface/structure) 
+                    lateralDispX = [x - y for x, y in zip(lateralNodDispX, lateralIncDispX)]            # sum of the interface displacement + relative displacement
+                    lateralNodDispZ    = g_o.getresults(group, step, intResults.Uz, 'node')
+                    lateralIncDispZ    = g_o.getresults(group, step, intResults.IRelUz, 'node')
+                    lateralDispZ = [x - y for x, y in zip(lateralNodDispZ, lateralIncDispZ)]          
+            
+            index_pos=[]
+            index_neg=[]
+            
+            for x in soil_layers:
+    
+                w=0
+                for p in range(len(lateralNodX)):
+                    if (lateralNodX[p]==(pileProp['D']/2) and abs(abs(lateralNodZ[p])-(global_scour+local_scour))<0.001):
+                        index_pos.append(w)
+                        break
+                    else:
+                        w=w+1
+                        
+            for x in soil_layers:
+                
+                w=0                    
+                for p in range(len(lateralNodX)):
+                    if (lateralNodX[p]==(-pileProp['D']/2) and abs(abs(lateralNodZ[p])-(global_scour+local_scour))<0.001):
+                        index_neg.append(w)
+                        break
+                    else:
+                        w=w+1
+                        
+            disp_pos_ux=[lateralDispX[m] for m in index_pos]
+            disp_neg_ux=[lateralDispX[m] for m in index_neg]
+            disp_pos_uz=[lateralDispZ[m] for m in index_pos]
+            disp_neg_uz=[lateralDispZ[m] for m in index_neg]
+            X_coord_pos=[lateralNodX[m] for m in index_pos]
+            X_coord_neg=[lateralNodX[m] for m in index_neg]
+    
+            rot_radiands_pos = math.atan(disp_pos_uz[0]/(disp_pos_ux[0]+X_coord_pos[0]))
+            rot_radiands_neg = math.atan(disp_neg_uz[0]/(disp_neg_ux[0]+X_coord_neg[0]))
+            
+            rot_radiands.append((rot_radiands_pos+rot_radiands_neg)/2)
+            
+            disp_mudline.append(disp_pos_ux[0])
+            
+            F_SLS.append(g_o.getresults(g_o.RigidBody_1_1, step, g_o.ResultTypes.RigidBody.Fx, 'node')[:][0])
+            
+  #          Fx= g_o.getresults(g_o.RigidBody_1_1, step, g_o.ResultTypes.RigidBody.Fx, 'node')[:]
+            
+            j=j+1    
+        #-------------------------------- SLS unloading --------------------------------#
+            
+        nSteps4 = len(Mstage_points_curve4)
+        
+        j=0
+        
+        for step in (SLS_unloading.Steps[t] for t in Mstage_points_curve4):
+            print('Processing step #',j+1,' out of ',nSteps4, 'steps, SLS unloading phase')
+            for group in g_o.Groups:
+                if group.Name.value == "LateralInterfaces":
+                    lateralNodalSigTot = g_o.getresults(group, step, intResults.InterfaceTotalNormalStress, 'node')             #why total and below they are effective?
+                    lateralTau1        = g_o.getresults(group, step, intResults.InterfaceShearStress, 'stresspoint')
+                    lateralTau2        = g_o.getresults(group, step, intResults.InterfaceShearStress2, 'stresspoint')
+                    lateralNodDispX    = g_o.getresults(group, step, intResults.Ux, 'node')
+                    lateralIncDispX    = g_o.getresults(group, step, intResults.IRelUx, 'node')         # relative displacement between the two nodes sharing coordinates (interface/structure) 
+                    lateralDispX = [x - y for x, y in zip(lateralNodDispX, lateralIncDispX)]            # sum of the interface displacement + relative displacement
+                    lateralNodDispZ    = g_o.getresults(group, step, intResults.Uz, 'node')
+                    lateralIncDispZ    = g_o.getresults(group, step, intResults.IRelUz, 'node')
+                    lateralDispZ = [x - y for x, y in zip(lateralNodDispZ, lateralIncDispZ)]          
+            
+            index_pos=[]
+            index_neg=[]
+            
+            for x in soil_layers:
+    
+                w=0
+                for p in range(len(lateralNodX)):
+                    if (lateralNodX[p]==(pileProp['D']/2) and abs(abs(lateralNodZ[p])-(global_scour+local_scour))<0.001):
+                        index_pos.append(w)
+                        break
+                    else:
+                        w=w+1
+                        
+            for x in soil_layers:
+                
+                w=0                    
+                for p in range(len(lateralNodX)):
+                    if (lateralNodX[p]==(-pileProp['D']/2) and abs(abs(lateralNodZ[p])-(global_scour+local_scour))<0.001):
+                        index_neg.append(w)
+                        break
+                    else:
+                        w=w+1
+                        
+            disp_pos_ux=[lateralDispX[m] for m in index_pos]
+            disp_neg_ux=[lateralDispX[m] for m in index_neg]
+            disp_pos_uz=[lateralDispZ[m] for m in index_pos]
+            disp_neg_uz=[lateralDispZ[m] for m in index_neg]
+            X_coord_pos=[lateralNodX[m] for m in index_pos]
+            X_coord_neg=[lateralNodX[m] for m in index_neg]
+    
+            rot_radiands_pos = math.atan(disp_pos_uz[0]/(disp_pos_ux[0]+X_coord_pos[0]))
+            rot_radiands_neg = math.atan(disp_neg_uz[0]/(disp_neg_ux[0]+X_coord_neg[0])) 
+            rot_radiands.append((rot_radiands_pos+rot_radiands_neg)/2)
+            
+            disp_mudline.append(disp_pos_ux[0])
+            
+            F_SLS.append(g_o.getresults(g_o.RigidBody_1_1, step, g_o.ResultTypes.RigidBody.Fx, 'node')[:][0])
+            
+            j=j+1
+            
+        worksheet1.write(0, 0, 'Fx Reached [kN]', bold)
+        worksheet1.write(0, 1, 'Horizontal disp [m]', bold)
+        worksheet1.write(0, 2, 'Rotation [rad]', bold)
+        
+        worksheet1.write_column(1, 0, F_SLS)
+        worksheet1.write_column(1, 1, disp_mudline)
+        worksheet1.write_column(1, 2, rot_radiands)   
+            
+        workbook1.close()       
+
   
     #################################################################################################
     #                        STRUCTURAL FORCE DISTRIBUTION ALONG THE MONOPILE                       #
@@ -1477,241 +1821,241 @@ def resultPostProcessing(df,results_directory):
 
     
     if structuralForces==1:
-    	nSteps1 = len(Mstage_points_curve1)
-    	workbook1 = xlsxwriter.Workbook('Structural Forces D_200.xlsx')
-    	worksheet1 = workbook1.add_worksheet('N')
-    	worksheet2 = workbook1.add_worksheet('V')
-    	worksheet3 = workbook1.add_worksheet('M')
-    	worksheet4 = workbook1.add_worksheet('Pile Displacement')
-    	F1=[]
-    		
-    	j=0
-    	for step in (D_200.Steps[t] for t in Mstage_points_curve1):
-    		print('Processing step #',j+1,' out of ',nSteps1, 'steps, Phase D/200')
-            # Fetch interface stress results meant to be integrated to provide nodal forces in global axis later on
-    		for group in g_o.Groups:
-    			if group.Name.value == "BottomInterfaces":
-    				bottomNodalSigTot  = g_o.getresults(group, step, intResults.InterfaceEffectiveNormalStress, 'node')
-    				bottomTau1         = g_o.getresults(group, step, intResults.InterfaceShearStress, 'stresspoint')
-    				bottomTau2         = g_o.getresults(group, step, intResults.InterfaceShearStress2, 'stresspoint')
-    			if group.Name.value == "LateralInterfaces":
-    				lateralNodalSigTot = g_o.getresults(group, step, intResults.InterfaceTotalNormalStress, 'node')
-    				lateralTau1        = g_o.getresults(group, step, intResults.InterfaceShearStress, 'stresspoint')
-    				lateralTau2        = g_o.getresults(group, step, intResults.InterfaceShearStress2, 'stresspoint')		
-    				lateralNodDispX    = g_o.getresults(group, step, intResults.Ux, 'node')
-    				lateralIncDispX    = g_o.getresults(group, step, intResults.IRelUx, 'node')         # relative displacement between the two nodes sharing coordinates (interface/structure) 
-    				lateralDispX = [x - y for x, y in zip(lateralNodDispX, lateralIncDispX)]            # sum of the interface displacement + relative displaceme
-    		
-    		# Stored fetched results in dictionnaries to provide data structure
-    		bottomTauSLocal       = getResultsPerElement(bottomElementID, bottomTau1, 6)
-    		bottomTauTLocal       = getResultsPerElement(bottomElementID, bottomTau2, 6)
-    		bottomNodalSigNLocal  = getResultsPerElement(bottomElementID, bottomNodalSigTot, 6)
-    		lateralTauSLocal      = getResultsPerElement(lateralElementID, lateralTau1, 6)
-    		lateralTauTLocal      = getResultsPerElement(lateralElementID, lateralTau2, 6)
-    		lateralNodalSigNLocal = getResultsPerElement(lateralElementID, lateralNodalSigTot, 6)
-    
-    		# Interpolate total stress to Gauss points as Output only provides them at nodes
-    		bottomSigNLocal  = interpolate(bottomNodalSigNLocal)
-    		lateralSigNLocal = interpolate(lateralNodalSigNLocal)
-    
-    		# Calculating global nodal forces for interface elements
-    		localAxis2 = [1, 0, 0]
-    		bottomGlobalNodalForces  = calculateNodalForces(bottomSigNLocal, bottomTauSLocal, bottomTauTLocal, bottomJacobian, bottomNormal, localAxis2)
-    		localAxis2 = [0, 0, 1]
-    		lateralGlobalNodalForces = calculateNodalForces(lateralSigNLocal, lateralTauSLocal, lateralTauTLocal, lateralJacobian, lateralNormal, localAxis2)
-    
-    		# Calculating force distribution within the pile
-    		# Strategy first consists in integrating stresses at bottom level (done in pileBottomForce) to obtain N, V and M at bottom
-    		# and then start integrating forces slice by slice from bottom level (done in structuralForces) to get N, V, M distribution over the pile
-    		# The contribution of the soil plug can be eventually deducted (which is what is being done here). This is debattable though
-    		xRef, yRef = 0, 0
-    		nPlug = calculateNPlug (bottomNodalSigTot, pileProp['D'], 'Half')
-    		pileBottomForce = getBottomForcesInPile(bottomGlobalNodalForces, bottomElementConnectivity, bottomInterfaceNodeCoordinates, xRef, nPlug)    
-    		structuralForces1 = getForcesInSlices(lateralGlobalNodalForces, lateralElementConnectivity, lateralSlices,slice_heights, lateralInterfaceNodeCoordinates, pileProp, xRef, pileBottomForce)
-    	
-    		#Calculating horizontal displacement at slices intersection
-    		index_disp=[]
-    		for x in soil_layers:
-
-    			w=0
-    			for p in range(len(lateralNodX)):
-    				if (lateralNodX[p]==(pileProp['D']/2) and abs(lateralNodZ[p]-x)<0.001):
-    					index_disp.append(w)
-    					break
-    				else:
-    					w=w+1
-    		Disp_Slices=[lateralDispX[m] for m in index_disp]
-    		Disp_Slices.reverse()
-    		#Creating excels with Structural information
-    		
-    		row=0
-    		col=0
-    		
-    		structuralForces1['Z'].reverse()
-    		structuralForces1['N'].reverse()
-    		structuralForces1['V'].reverse()
-    		structuralForces1['M'].reverse()
-    		
-    		if j==0:
-    			for i in range(len(structuralForces1['Z'])):
-    				row = row+1
-    				worksheet1.write(row+2, col, structuralForces1['Z'][i])
-    				worksheet2.write(row+2, col, structuralForces1['Z'][i])
-    				worksheet3.write(row+2, col, structuralForces1['Z'][i])
-    				worksheet4.write(row+2, col, structuralForces1['Z'][i])
-    			row = 0
-    			
-    			worksheet1.write(row, col, 'Fx Reached')
-    			worksheet2.write(row, col, 'Fx Reached')
-    			worksheet3.write(row, col, 'Fx Reached')
-    			worksheet4.write(row, col, 'Fx Reached')
-    			
-    			worksheet1.write(row+2, col, 'Depth')
-    			worksheet2.write(row+2, col, 'Depth')
-    			worksheet3.write(row+2, col, 'Depth')
-    			worksheet4.write(row+2, col, 'Depth')
-    			
-    		worksheet1.write(0, j+1, step.Reached.ForceX.value)
-    		worksheet2.write(0, j+1, step.Reached.ForceX.value)
-    		worksheet3.write(0, j+1, step.Reached.ForceX.value)
-    		worksheet4.write(0, j+1, step.Reached.ForceX.value)
-    		F1.append(step.Reached.ForceX.value)
-    		
-    		worksheet1.write(2, j+1, 'Step '+str(Mstage_points_curve1[j]+1))
-    		worksheet2.write(2, j+1, 'Step '+str(Mstage_points_curve1[j]+1))
-    		worksheet3.write(2, j+1, 'Step '+str(Mstage_points_curve1[j]+1))
-    		worksheet4.write(2, j+1, 'Step '+str(Mstage_points_curve1[j]+1))
-    				
-    		for i in range(len(structuralForces1['Z'])):
-    		
-    			worksheet1.write(row+3, j+1, structuralForces1['N'][i])
-    			worksheet2.write(row+3, j+1, structuralForces1['V'][i])
-    			worksheet3.write(row+3, j+1, structuralForces1['M'][i])
-    			worksheet4.write(row+3, j+1, Disp_Slices[i])
-    			row +=1
-    			
-    		j = j+1
-    		
-    	workbook1.close()
-    	
-    	nSteps2 = len(Mstage_points_curve2)
-    	workbook2 = xlsxwriter.Workbook('Structural Forces D_10.xlsx')
-    	worksheet5 = workbook2.add_worksheet('N')
-    	worksheet6 = workbook2.add_worksheet('V')
-    	worksheet7 = workbook2.add_worksheet('M')
-    	worksheet8 = workbook2.add_worksheet('Pile Displacement')
-    	F2=[]
-    	
-    	j=0
-    	for step in (D_10.Steps[t] for t in Mstage_points_curve2):
-    		print('Processing step #',j+1,' out of ',nSteps2, 'steps, Phase D/10')
-    		# Fetch interface stress results meant to be integrated to provide nodal forces in global axis later on
-    		for group in g_o.Groups:
-    			if group.Name.value == "BottomInterfaces":
-    				bottomNodalSigTot  = g_o.getresults(group, step, intResults.InterfaceEffectiveNormalStress, 'node')
-    				bottomTau1         = g_o.getresults(group, step, intResults.InterfaceShearStress, 'stresspoint')
-    				bottomTau2         = g_o.getresults(group, step, intResults.InterfaceShearStress2, 'stresspoint')
-    			if group.Name.value == "LateralInterfaces":
-    				lateralNodalSigTot = g_o.getresults(group, step, intResults.InterfaceTotalNormalStress, 'node')
-    				lateralTau1        = g_o.getresults(group, step, intResults.InterfaceShearStress, 'stresspoint')
-    				lateralTau2        = g_o.getresults(group, step, intResults.InterfaceShearStress2, 'stresspoint')		
-    				lateralNodDispX    = g_o.getresults(group, step, intResults.Ux, 'node')
-    				lateralIncDispX    = g_o.getresults(group, step, intResults.IRelUx, 'node')         # relative displacement between the two nodes sharing coordinates (interface/structure) 
-    				lateralDispX = [x - y for x, y in zip(lateralNodDispX, lateralIncDispX)]            # sum of the interface displacement + relative displaceme
-    		
-    		# Stored fetched results in dictionnaries to provide data structure
-    		bottomTauSLocal       = getResultsPerElement(bottomElementID, bottomTau1, 6)
-    		bottomTauTLocal       = getResultsPerElement(bottomElementID, bottomTau2, 6)
-    		bottomNodalSigNLocal  = getResultsPerElement(bottomElementID, bottomNodalSigTot, 6)
-    		lateralTauSLocal      = getResultsPerElement(lateralElementID, lateralTau1, 6)
-    		lateralTauTLocal      = getResultsPerElement(lateralElementID, lateralTau2, 6)
-    		lateralNodalSigNLocal = getResultsPerElement(lateralElementID, lateralNodalSigTot, 6)
-    
-    		# Interpolate total stress to Gauss points as Output only provides them at nodes
-    		bottomSigNLocal  = interpolate(bottomNodalSigNLocal)
-    		lateralSigNLocal = interpolate(lateralNodalSigNLocal)
-    
-    		# Calculating global nodal forces for interface elements
-    		localAxis2 = [1, 0, 0]
-    		bottomGlobalNodalForces  = calculateNodalForces(bottomSigNLocal, bottomTauSLocal, bottomTauTLocal, bottomJacobian, bottomNormal, localAxis2)
-    		localAxis2 = [0, 0, 1]
-    		lateralGlobalNodalForces = calculateNodalForces(lateralSigNLocal, lateralTauSLocal, lateralTauTLocal, lateralJacobian, lateralNormal, localAxis2)
-    
-    		# Calculating force distribution within the pile
-    		# Strategy first consists in integrating stresses at bottom level (done in pileBottomForce) to obtain N, V and M at bottom
-    		# and then start integrating forces slice by slice from bottom level (done in structuralForces) to get N, V, M distribution over the pile
-    		# The contribution of the soil plug can be eventually deducted (which is what is being done here). This is debattable though
-    		xRef, yRef = 0, 0
-    		nPlug = calculateNPlug (bottomNodalSigTot, pileProp['D'], 'Half')
-    		pileBottomForce = getBottomForcesInPile(bottomGlobalNodalForces, bottomElementConnectivity, bottomInterfaceNodeCoordinates, xRef, nPlug)    
-    		structuralForces2 = getForcesInSlices(lateralGlobalNodalForces, lateralElementConnectivity, lateralSlices,slice_heights, lateralInterfaceNodeCoordinates, pileProp, xRef, pileBottomForce)
-    		
-    		#Calculating horizontal displacement at slices intersection   			
-    		index_disp=[]
-    		for x in soil_layers:
-
-    			w=0
-    			for p in range(len(lateralNodX)):
-    				if (lateralNodX[p]==(pileProp['D']/2) and abs(lateralNodZ[p]-x)<0.001):
-    					index_disp.append(w)
-    					break
-    				else:
-    					w=w+1
-    		Disp_Slices=[lateralDispX[m] for m in index_disp]
-    		Disp_Slices.reverse()
-              		
-    		#Creating excels with Structural information
-    		
-    		row=0
-    		col=0
-    		
-    		structuralForces2['Z'].reverse()
-    		structuralForces2['N'].reverse()
-    		structuralForces2['V'].reverse()
-    		structuralForces2['M'].reverse()
-    		
-    		if j==0:
-    			for i in range(len(structuralForces2['Z'])):
-    				row = row+1
-    				worksheet5.write(row+2, col, structuralForces2['Z'][i])
-    				worksheet6.write(row+2, col, structuralForces2['Z'][i])
-    				worksheet7.write(row+2, col, structuralForces2['Z'][i])
-    				worksheet8.write(row+2, col, structuralForces2['Z'][i])
-    			row = 0
-    			
-    			worksheet5.write(row, col, 'Fx Reached')
-    			worksheet6.write(row, col, 'Fx Reached')
-    			worksheet7.write(row, col, 'Fx Reached')
-    			worksheet8.write(row, col, 'Fx Reached')
-    			
-    			worksheet5.write(row+2, col, 'Depth')
-    			worksheet6.write(row+2, col, 'Depth')
-    			worksheet7.write(row+2, col, 'Depth')
-    			worksheet8.write(row+2, col, 'Depth')
-    			
-    		worksheet5.write(0, j+1, step.Reached.ForceX.value)
-    		worksheet6.write(0, j+1, step.Reached.ForceX.value)
-    		worksheet7.write(0, j+1, step.Reached.ForceX.value)
-    		worksheet8.write(0, j+1, step.Reached.ForceX.value)
-    		F2.append(step.Reached.ForceX.value)
+        nSteps1 = len(Mstage_points_curve1)
+        workbook1 = xlsxwriter.Workbook('Structural Forces D_200.xlsx')
+        worksheet1 = workbook1.add_worksheet('N')
+        worksheet2 = workbook1.add_worksheet('V')
+        worksheet3 = workbook1.add_worksheet('M')
+        worksheet4 = workbook1.add_worksheet('Pile Displacement')
+        F1=[]
             
-    		worksheet5.write(2, j+1, 'Step '+str(Mstage_points_curve2[j]+1))
-    		worksheet6.write(2, j+1, 'Step '+str(Mstage_points_curve2[j]+1))
-    		worksheet7.write(2, j+1, 'Step '+str(Mstage_points_curve2[j]+1))
-    		worksheet8.write(2, j+1, 'Step '+str(Mstage_points_curve2[j]+1))
-    				
-    		for i in range(len(structuralForces2['Z'])):
-    		
-    			worksheet5.write(row+3, j+1, structuralForces2['N'][i])
-    			worksheet6.write(row+3, j+1, structuralForces2['V'][i])
-    			worksheet7.write(row+3, j+1, structuralForces2['M'][i])
-    			worksheet8.write(row+3, j+1, Disp_Slices[i])
-    			row +=1
-    			
-    		j = j+1
-    		
-    	workbook2.close()
-    			
+        j=0
+        for step in (D_200.Steps[t] for t in Mstage_points_curve1):
+            print('Processing step #',j+1,' out of ',nSteps1, 'steps, Phase D/200')
+            # Fetch interface stress results meant to be integrated to provide nodal forces in global axis later on
+            for group in g_o.Groups:
+                if group.Name.value == "BottomInterfaces":
+                    bottomNodalSigTot  = g_o.getresults(group, step, intResults.InterfaceEffectiveNormalStress, 'node')
+                    bottomTau1         = g_o.getresults(group, step, intResults.InterfaceShearStress, 'stresspoint')
+                    bottomTau2         = g_o.getresults(group, step, intResults.InterfaceShearStress2, 'stresspoint')
+                if group.Name.value == "LateralInterfaces":
+                    lateralNodalSigTot = g_o.getresults(group, step, intResults.InterfaceTotalNormalStress, 'node')
+                    lateralTau1        = g_o.getresults(group, step, intResults.InterfaceShearStress, 'stresspoint')
+                    lateralTau2        = g_o.getresults(group, step, intResults.InterfaceShearStress2, 'stresspoint')        
+                    lateralNodDispX    = g_o.getresults(group, step, intResults.Ux, 'node')
+                    lateralIncDispX    = g_o.getresults(group, step, intResults.IRelUx, 'node')         # relative displacement between the two nodes sharing coordinates (interface/structure) 
+                    lateralDispX = [x - y for x, y in zip(lateralNodDispX, lateralIncDispX)]            # sum of the interface displacement + relative displaceme
+            
+            # Stored fetched results in dictionnaries to provide data structure
+            bottomTauSLocal       = getResultsPerElement(bottomElementID, bottomTau1, 6)
+            bottomTauTLocal       = getResultsPerElement(bottomElementID, bottomTau2, 6)
+            bottomNodalSigNLocal  = getResultsPerElement(bottomElementID, bottomNodalSigTot, 6)
+            lateralTauSLocal      = getResultsPerElement(lateralElementID, lateralTau1, 6)
+            lateralTauTLocal      = getResultsPerElement(lateralElementID, lateralTau2, 6)
+            lateralNodalSigNLocal = getResultsPerElement(lateralElementID, lateralNodalSigTot, 6)
+    
+            # Interpolate total stress to Gauss points as Output only provides them at nodes
+            bottomSigNLocal  = interpolate(bottomNodalSigNLocal)
+            lateralSigNLocal = interpolate(lateralNodalSigNLocal)
+    
+            # Calculating global nodal forces for interface elements
+            localAxis2 = [1, 0, 0]
+            bottomGlobalNodalForces  = calculateNodalForces(bottomSigNLocal, bottomTauSLocal, bottomTauTLocal, bottomJacobian, bottomNormal, localAxis2)
+            localAxis2 = [0, 0, 1]
+            lateralGlobalNodalForces = calculateNodalForces(lateralSigNLocal, lateralTauSLocal, lateralTauTLocal, lateralJacobian, lateralNormal, localAxis2)
+    
+            # Calculating force distribution within the pile
+            # Strategy first consists in integrating stresses at bottom level (done in pileBottomForce) to obtain N, V and M at bottom
+            # and then start integrating forces slice by slice from bottom level (done in structuralForces) to get N, V, M distribution over the pile
+            # The contribution of the soil plug can be eventually deducted (which is what is being done here). This is debattable though
+            xRef, yRef = 0, 0
+            nPlug = calculateNPlug (bottomNodalSigTot, pileProp['D'], 'Half')
+            pileBottomForce = getBottomForcesInPile(bottomGlobalNodalForces, bottomElementConnectivity, bottomInterfaceNodeCoordinates, xRef, nPlug)    
+            structuralForces1 = getForcesInSlices(lateralGlobalNodalForces, lateralElementConnectivity, lateralSlices,slice_heights, lateralInterfaceNodeCoordinates, pileProp, xRef, pileBottomForce)
+        
+            #Calculating horizontal displacement at slices intersection
+            index_disp=[]
+            for x in soil_layers:
+
+                w=0
+                for p in range(len(lateralNodX)):
+                    if (lateralNodX[p]==(pileProp['D']/2) and abs(lateralNodZ[p]-x)<0.001):
+                        index_disp.append(w)
+                        break
+                    else:
+                        w=w+1
+            Disp_Slices=[lateralDispX[m] for m in index_disp]
+            Disp_Slices.reverse()
+            #Creating excels with Structural information
+            
+            row=0
+            col=0
+            
+            structuralForces1['Z'].reverse()
+            structuralForces1['N'].reverse()
+            structuralForces1['V'].reverse()
+            structuralForces1['M'].reverse()
+            
+            if j==0:
+                for i in range(len(structuralForces1['Z'])):
+                    row = row+1
+                    worksheet1.write(row+2, col, structuralForces1['Z'][i])
+                    worksheet2.write(row+2, col, structuralForces1['Z'][i])
+                    worksheet3.write(row+2, col, structuralForces1['Z'][i])
+                    worksheet4.write(row+2, col, structuralForces1['Z'][i])
+                row = 0
+                
+                worksheet1.write(row, col, 'Fx Reached')
+                worksheet2.write(row, col, 'Fx Reached')
+                worksheet3.write(row, col, 'Fx Reached')
+                worksheet4.write(row, col, 'Fx Reached')
+                
+                worksheet1.write(row+2, col, 'Depth')
+                worksheet2.write(row+2, col, 'Depth')
+                worksheet3.write(row+2, col, 'Depth')
+                worksheet4.write(row+2, col, 'Depth')
+                
+            worksheet1.write(0, j+1, step.Reached.ForceX.value)
+            worksheet2.write(0, j+1, step.Reached.ForceX.value)
+            worksheet3.write(0, j+1, step.Reached.ForceX.value)
+            worksheet4.write(0, j+1, step.Reached.ForceX.value)
+            F1.append(step.Reached.ForceX.value)
+            
+            worksheet1.write(2, j+1, 'Step '+str(Mstage_points_curve1[j]+1))
+            worksheet2.write(2, j+1, 'Step '+str(Mstage_points_curve1[j]+1))
+            worksheet3.write(2, j+1, 'Step '+str(Mstage_points_curve1[j]+1))
+            worksheet4.write(2, j+1, 'Step '+str(Mstage_points_curve1[j]+1))
+                    
+            for i in range(len(structuralForces1['Z'])):
+            
+                worksheet1.write(row+3, j+1, structuralForces1['N'][i])
+                worksheet2.write(row+3, j+1, structuralForces1['V'][i])
+                worksheet3.write(row+3, j+1, structuralForces1['M'][i])
+                worksheet4.write(row+3, j+1, Disp_Slices[i])
+                row +=1
+                
+            j = j+1
+            
+        workbook1.close()
+        
+        nSteps2 = len(Mstage_points_curve2)
+        workbook2 = xlsxwriter.Workbook('Structural Forces D_10.xlsx')
+        worksheet5 = workbook2.add_worksheet('N')
+        worksheet6 = workbook2.add_worksheet('V')
+        worksheet7 = workbook2.add_worksheet('M')
+        worksheet8 = workbook2.add_worksheet('Pile Displacement')
+        F2=[]
+        
+        j=0
+        for step in (D_10.Steps[t] for t in Mstage_points_curve2):
+            print('Processing step #',j+1,' out of ',nSteps2, 'steps, Phase D/10')
+            # Fetch interface stress results meant to be integrated to provide nodal forces in global axis later on
+            for group in g_o.Groups:
+                if group.Name.value == "BottomInterfaces":
+                    bottomNodalSigTot  = g_o.getresults(group, step, intResults.InterfaceEffectiveNormalStress, 'node')
+                    bottomTau1         = g_o.getresults(group, step, intResults.InterfaceShearStress, 'stresspoint')
+                    bottomTau2         = g_o.getresults(group, step, intResults.InterfaceShearStress2, 'stresspoint')
+                if group.Name.value == "LateralInterfaces":
+                    lateralNodalSigTot = g_o.getresults(group, step, intResults.InterfaceTotalNormalStress, 'node')
+                    lateralTau1        = g_o.getresults(group, step, intResults.InterfaceShearStress, 'stresspoint')
+                    lateralTau2        = g_o.getresults(group, step, intResults.InterfaceShearStress2, 'stresspoint')        
+                    lateralNodDispX    = g_o.getresults(group, step, intResults.Ux, 'node')
+                    lateralIncDispX    = g_o.getresults(group, step, intResults.IRelUx, 'node')         # relative displacement between the two nodes sharing coordinates (interface/structure) 
+                    lateralDispX = [x - y for x, y in zip(lateralNodDispX, lateralIncDispX)]            # sum of the interface displacement + relative displaceme
+            
+            # Stored fetched results in dictionnaries to provide data structure
+            bottomTauSLocal       = getResultsPerElement(bottomElementID, bottomTau1, 6)
+            bottomTauTLocal       = getResultsPerElement(bottomElementID, bottomTau2, 6)
+            bottomNodalSigNLocal  = getResultsPerElement(bottomElementID, bottomNodalSigTot, 6)
+            lateralTauSLocal      = getResultsPerElement(lateralElementID, lateralTau1, 6)
+            lateralTauTLocal      = getResultsPerElement(lateralElementID, lateralTau2, 6)
+            lateralNodalSigNLocal = getResultsPerElement(lateralElementID, lateralNodalSigTot, 6)
+    
+            # Interpolate total stress to Gauss points as Output only provides them at nodes
+            bottomSigNLocal  = interpolate(bottomNodalSigNLocal)
+            lateralSigNLocal = interpolate(lateralNodalSigNLocal)
+    
+            # Calculating global nodal forces for interface elements
+            localAxis2 = [1, 0, 0]
+            bottomGlobalNodalForces  = calculateNodalForces(bottomSigNLocal, bottomTauSLocal, bottomTauTLocal, bottomJacobian, bottomNormal, localAxis2)
+            localAxis2 = [0, 0, 1]
+            lateralGlobalNodalForces = calculateNodalForces(lateralSigNLocal, lateralTauSLocal, lateralTauTLocal, lateralJacobian, lateralNormal, localAxis2)
+    
+            # Calculating force distribution within the pile
+            # Strategy first consists in integrating stresses at bottom level (done in pileBottomForce) to obtain N, V and M at bottom
+            # and then start integrating forces slice by slice from bottom level (done in structuralForces) to get N, V, M distribution over the pile
+            # The contribution of the soil plug can be eventually deducted (which is what is being done here). This is debattable though
+            xRef, yRef = 0, 0
+            nPlug = calculateNPlug (bottomNodalSigTot, pileProp['D'], 'Half')
+            pileBottomForce = getBottomForcesInPile(bottomGlobalNodalForces, bottomElementConnectivity, bottomInterfaceNodeCoordinates, xRef, nPlug)    
+            structuralForces2 = getForcesInSlices(lateralGlobalNodalForces, lateralElementConnectivity, lateralSlices,slice_heights, lateralInterfaceNodeCoordinates, pileProp, xRef, pileBottomForce)
+            
+            #Calculating horizontal displacement at slices intersection               
+            index_disp=[]
+            for x in soil_layers:
+
+                w=0
+                for p in range(len(lateralNodX)):
+                    if (lateralNodX[p]==(pileProp['D']/2) and abs(lateralNodZ[p]-x)<0.001):
+                        index_disp.append(w)
+                        break
+                    else:
+                        w=w+1
+            Disp_Slices=[lateralDispX[m] for m in index_disp]
+            Disp_Slices.reverse()
+                      
+            #Creating excels with Structural information
+            
+            row=0
+            col=0
+            
+            structuralForces2['Z'].reverse()
+            structuralForces2['N'].reverse()
+            structuralForces2['V'].reverse()
+            structuralForces2['M'].reverse()
+            
+            if j==0:
+                for i in range(len(structuralForces2['Z'])):
+                    row = row+1
+                    worksheet5.write(row+2, col, structuralForces2['Z'][i])
+                    worksheet6.write(row+2, col, structuralForces2['Z'][i])
+                    worksheet7.write(row+2, col, structuralForces2['Z'][i])
+                    worksheet8.write(row+2, col, structuralForces2['Z'][i])
+                row = 0
+                
+                worksheet5.write(row, col, 'Fx Reached')
+                worksheet6.write(row, col, 'Fx Reached')
+                worksheet7.write(row, col, 'Fx Reached')
+                worksheet8.write(row, col, 'Fx Reached')
+                
+                worksheet5.write(row+2, col, 'Depth')
+                worksheet6.write(row+2, col, 'Depth')
+                worksheet7.write(row+2, col, 'Depth')
+                worksheet8.write(row+2, col, 'Depth')
+                
+            worksheet5.write(0, j+1, step.Reached.ForceX.value)
+            worksheet6.write(0, j+1, step.Reached.ForceX.value)
+            worksheet7.write(0, j+1, step.Reached.ForceX.value)
+            worksheet8.write(0, j+1, step.Reached.ForceX.value)
+            F2.append(step.Reached.ForceX.value)
+            
+            worksheet5.write(2, j+1, 'Step '+str(Mstage_points_curve2[j]+1))
+            worksheet6.write(2, j+1, 'Step '+str(Mstage_points_curve2[j]+1))
+            worksheet7.write(2, j+1, 'Step '+str(Mstage_points_curve2[j]+1))
+            worksheet8.write(2, j+1, 'Step '+str(Mstage_points_curve2[j]+1))
+                    
+            for i in range(len(structuralForces2['Z'])):
+            
+                worksheet5.write(row+3, j+1, structuralForces2['N'][i])
+                worksheet6.write(row+3, j+1, structuralForces2['V'][i])
+                worksheet7.write(row+3, j+1, structuralForces2['M'][i])
+                worksheet8.write(row+3, j+1, Disp_Slices[i])
+                row +=1
+                
+            j = j+1
+            
+        workbook2.close()
+                
     ####################################################################################################################################################
     #                                    P-Y, M-theta, Moment Base-rot and Shear Base - Base Ux CURVES FOR EACH SLICE                                  #
     ####################################################################################################################################################
@@ -1808,30 +2152,30 @@ def resultPostProcessing(df,results_directory):
             
             index_surf4=[]
             for z, x in lateralX.items():
-            	if lateralInterfaceNodeCoordinates[z][2]==-pileProp['l']:
-            		index_surf4.append(z)
+                if lateralInterfaceNodeCoordinates[z][2]==-pileProp['l']:
+                    index_surf4.append(z)
                     
             disp_base=[0 for n in range(len(index_surf4))]
             n=0
-            for ll in index_surf4:	   
-            	disp_base[n]=lateralUX[ll][0]
-            	n=n+1
+            for ll in index_surf4:       
+                disp_base[n]=lateralUX[ll][0]
+                n=n+1
                 
             X_base= (sum(disp_base))/len(disp_base)
             
             index_surf3=[]
             for w, j in lateralX.items():
-            	if (j==[pileProp['D']/2] or j==[-pileProp['D']/2]):
-            		if lateralInterfaceNodeCoordinates[w][2]==-pileProp['l']:
-            			index_surf3.append(w)				
-			
+                if (j==[pileProp['D']/2] or j==[-pileProp['D']/2]):
+                    if lateralInterfaceNodeCoordinates[w][2]==-pileProp['l']:
+                        index_surf3.append(w)                
+            
             rot_radiands_base=[0 for m in range(len(index_surf3))]
             m=0
-            for q in index_surf3:	   
-            	rot_radiands_base[m]=math.atan(lateralUZ[q][0]/(lateralUX[q][0]+lateralX[q][0]))
-            	m=m+1
-	  
-            Theta_base= (sum(rot_radiands_base))/len(rot_radiands_base)	         
+            for q in index_surf3:       
+                rot_radiands_base[m]=math.atan(lateralUZ[q][0]/(lateralUX[q][0]+lateralX[q][0]))
+                m=m+1
+      
+            Theta_base= (sum(rot_radiands_base))/len(rot_radiands_base)             
             
             for slice in range(numberOfSlice):
                 pYCollection1[slice][0].append(p[slice])
@@ -1846,133 +2190,133 @@ def resultPostProcessing(df,results_directory):
             
             # Next step
             i = i + 1
-    		
+            
     if Curves:
-    	i=0
-    	pYCollection2 = {}
-    	MthetaColleciton2= {}
-    	Base_shearCollection2 = {}
-    	Base_momentCollection2 = {}
-    	Base_shearCollection2 = [[0],[0]]
-    	Base_momentCollection2 = [[0],[0]]
-    	for slice in range(numberOfSlice):
-    		pYCollection2[slice]=[[0],[0]]
-    		MthetaColleciton2[slice]=[[0],[0]]
-    	nSteps2 = len(Mstage_points_curve2)
-    	for step in (D_10.Steps[t] for t in Mstage_points_curve2):
-    		print('Processing step #',i+1,' out of ',nSteps2, 'steps, Phase D_10')
-    		# Fetch lateral interface stress results meant to be integrated to provide nodal forces in global axis 
-    		# later on to calculate p as well as corresponding displacement to calculate y for the current step 
-    		for group in g_o.Groups:
-    			if group.Name.value == "LateralInterfaces":
-    				lateralNodalSigTot = g_o.getresults(group, step, intResults.InterfaceTotalNormalStress, 'node')             #why total and below they are effective?
-    				lateralTau1        = g_o.getresults(group, step, intResults.InterfaceShearStress, 'stresspoint')
-    				lateralTau2        = g_o.getresults(group, step, intResults.InterfaceShearStress2, 'stresspoint')
-    				lateralNodDispX    = g_o.getresults(group, step, intResults.Ux, 'node')
-    				lateralIncDispX    = g_o.getresults(group, step, intResults.IRelUx, 'node')         # relative displacement between the two nodes sharing coordinates (interface/structure) 
-    				lateralDispX = [x - y for x, y in zip(lateralNodDispX, lateralIncDispX)]            # sum of the interface displacement + relative displacement
-    				lateralNodDispZ    = g_o.getresults(group, step, intResults.Uz, 'node')
-    				lateralIncDispZ    = g_o.getresults(group, step, intResults.IRelUz, 'node')
-    				lateralDispZ = [x - y for x, y in zip(lateralNodDispZ, lateralIncDispZ)]          
-    			if group.Name.value == "BottomInterfaces":
-    				bottomNodalSigTot  = g_o.getresults(group, step, intResults.InterfaceTotalNormalStress, 'node')        #why effective and above they are total?
-    				bottomTau1         = g_o.getresults(group, step, intResults.InterfaceShearStress, 'stresspoint')
-    				bottomTau2         = g_o.getresults(group, step, intResults.InterfaceShearStress2, 'stresspoint')
-    				bottomNodDispX    = g_o.getresults(group, step, intResults.Ux, 'node')
-    				bottomIncDispX    = g_o.getresults(group, step, intResults.IRelUx, 'node')
-    				bottomDispX = [x - y for x, y in zip(bottomNodDispX, bottomIncDispX)]         
-    				bottomNodDispZ    = g_o.getresults(group, step, intResults.Uz, 'node')
-    				bottomIncDispZ    = g_o.getresults(group, step, intResults.IRelUz, 'node')
-    				bottomDispZ = [x - y for x, y in zip(bottomNodDispZ, bottomIncDispZ)]
-    		
-    		# Stored fetched results in dictionnaries to provide data structure
-    		lateralTauSLocal	  = getResultsPerElement(lateralElementID, lateralTau1, 6)
-    		lateralTauTLocal	  = getResultsPerElement(lateralElementID, lateralTau2, 6)
-    		lateralNodalSigNLocal = getResultsPerElement(lateralElementID, lateralNodalSigTot, 6)
-    		
-    		bottomTauSLocal	   = getResultsPerElement(bottomElementID, bottomTau1, 6)
-    		bottomTauTLocal	   = getResultsPerElement(bottomElementID, bottomTau2, 6)
-    		bottomNodalSigNLocal  = getResultsPerElement(bottomElementID, bottomNodalSigTot, 6)
-    		
-    		lateralUX			 = getResultsPerNode(lateralNodeID, lateralDispX, 1)
-    		lateralUZ			 = getResultsPerNode(lateralNodeID, lateralDispZ, 1)
-    		lateralX			  = getResultsPerNode(lateralNodeID, lateralNodX, 1)
-    		
-    		bottomUX			 = getResultsPerNode(bottomNodeID, bottomDispX, 1)
-    		bottomUZ			 = getResultsPerNode(bottomNodeID, bottomDispZ, 1)
-    		bottomX			  = getResultsPerNode(bottomNodeID, bottomNodX, 1)
-    			
-    		# Interpolate total stress to Gauss points as Output only provides them at nodes
-    		lateralSigNLocal  = interpolate(lateralNodalSigNLocal)	  #gives normal stresses in gauss points instead of nodes (input)
-    		bottomSigNLocal  = interpolate(bottomNodalSigNLocal)		#gives normal stresses in gauss points instead of nodes (input)
+        i=0
+        pYCollection2 = {}
+        MthetaColleciton2= {}
+        Base_shearCollection2 = {}
+        Base_momentCollection2 = {}
+        Base_shearCollection2 = [[0],[0]]
+        Base_momentCollection2 = [[0],[0]]
+        for slice in range(numberOfSlice):
+            pYCollection2[slice]=[[0],[0]]
+            MthetaColleciton2[slice]=[[0],[0]]
+        nSteps2 = len(Mstage_points_curve2)
+        for step in (D_10.Steps[t] for t in Mstage_points_curve2):
+            print('Processing step #',i+1,' out of ',nSteps2, 'steps, Phase D_10')
+            # Fetch lateral interface stress results meant to be integrated to provide nodal forces in global axis 
+            # later on to calculate p as well as corresponding displacement to calculate y for the current step 
+            for group in g_o.Groups:
+                if group.Name.value == "LateralInterfaces":
+                    lateralNodalSigTot = g_o.getresults(group, step, intResults.InterfaceTotalNormalStress, 'node')             #why total and below they are effective?
+                    lateralTau1        = g_o.getresults(group, step, intResults.InterfaceShearStress, 'stresspoint')
+                    lateralTau2        = g_o.getresults(group, step, intResults.InterfaceShearStress2, 'stresspoint')
+                    lateralNodDispX    = g_o.getresults(group, step, intResults.Ux, 'node')
+                    lateralIncDispX    = g_o.getresults(group, step, intResults.IRelUx, 'node')         # relative displacement between the two nodes sharing coordinates (interface/structure) 
+                    lateralDispX = [x - y for x, y in zip(lateralNodDispX, lateralIncDispX)]            # sum of the interface displacement + relative displacement
+                    lateralNodDispZ    = g_o.getresults(group, step, intResults.Uz, 'node')
+                    lateralIncDispZ    = g_o.getresults(group, step, intResults.IRelUz, 'node')
+                    lateralDispZ = [x - y for x, y in zip(lateralNodDispZ, lateralIncDispZ)]          
+                if group.Name.value == "BottomInterfaces":
+                    bottomNodalSigTot  = g_o.getresults(group, step, intResults.InterfaceTotalNormalStress, 'node')        #why effective and above they are total?
+                    bottomTau1         = g_o.getresults(group, step, intResults.InterfaceShearStress, 'stresspoint')
+                    bottomTau2         = g_o.getresults(group, step, intResults.InterfaceShearStress2, 'stresspoint')
+                    bottomNodDispX    = g_o.getresults(group, step, intResults.Ux, 'node')
+                    bottomIncDispX    = g_o.getresults(group, step, intResults.IRelUx, 'node')
+                    bottomDispX = [x - y for x, y in zip(bottomNodDispX, bottomIncDispX)]         
+                    bottomNodDispZ    = g_o.getresults(group, step, intResults.Uz, 'node')
+                    bottomIncDispZ    = g_o.getresults(group, step, intResults.IRelUz, 'node')
+                    bottomDispZ = [x - y for x, y in zip(bottomNodDispZ, bottomIncDispZ)]
+            
+            # Stored fetched results in dictionnaries to provide data structure
+            lateralTauSLocal      = getResultsPerElement(lateralElementID, lateralTau1, 6)
+            lateralTauTLocal      = getResultsPerElement(lateralElementID, lateralTau2, 6)
+            lateralNodalSigNLocal = getResultsPerElement(lateralElementID, lateralNodalSigTot, 6)
+            
+            bottomTauSLocal       = getResultsPerElement(bottomElementID, bottomTau1, 6)
+            bottomTauTLocal       = getResultsPerElement(bottomElementID, bottomTau2, 6)
+            bottomNodalSigNLocal  = getResultsPerElement(bottomElementID, bottomNodalSigTot, 6)
+            
+            lateralUX             = getResultsPerNode(lateralNodeID, lateralDispX, 1)
+            lateralUZ             = getResultsPerNode(lateralNodeID, lateralDispZ, 1)
+            lateralX              = getResultsPerNode(lateralNodeID, lateralNodX, 1)
+            
+            bottomUX             = getResultsPerNode(bottomNodeID, bottomDispX, 1)
+            bottomUZ             = getResultsPerNode(bottomNodeID, bottomDispZ, 1)
+            bottomX              = getResultsPerNode(bottomNodeID, bottomNodX, 1)
+                
+            # Interpolate total stress to Gauss points as Output only provides them at nodes
+            lateralSigNLocal  = interpolate(lateralNodalSigNLocal)      #gives normal stresses in gauss points instead of nodes (input)
+            bottomSigNLocal  = interpolate(bottomNodalSigNLocal)        #gives normal stresses in gauss points instead of nodes (input)
     
-    		# Calculating global nodal forces for lateral interface elements
-    		localAxis2 = [0, 0, 1]
-    		lateralGlobalNodalForces = calculateNodalForces(lateralSigNLocal, lateralTauSLocal, lateralTauTLocal, lateralJacobian, lateralNormal, localAxis2)
-    		
-    		# Calculating global nodal forces for bottom interface elements
-    		localAxis2 = [1, 0, 0]	  #vector components of first of the 2 parallel axis to the surface
-    		bottomGlobalNodalForces  = calculateNodalForces(bottomSigNLocal, bottomTauSLocal, bottomTauTLocal, bottomJacobian, bottomNormal, localAxis2)
-    		
-    		# Calculating p and y for each buried slice and store them in pYCollection
-    		p, y = pYValues(lateralGlobalNodalForces, lateralUX, lateralElementConnectivity, lateralSlices,slice_heights, numberOfSlice)
-    		  
-    		# Calculating M and theta for each buried slice and store them in MThetaCollection
-    		M, T = mtValues(lateralGlobalNodalForces,lateralGlobalNodalForces_v, lateralUX, lateralUZ, lateralX, lateralElementConnectivity, lateralSlices, numberOfSlice)
+            # Calculating global nodal forces for lateral interface elements
+            localAxis2 = [0, 0, 1]
+            lateralGlobalNodalForces = calculateNodalForces(lateralSigNLocal, lateralTauSLocal, lateralTauTLocal, lateralJacobian, lateralNormal, localAxis2)
+            
+            # Calculating global nodal forces for bottom interface elements
+            localAxis2 = [1, 0, 0]      #vector components of first of the 2 parallel axis to the surface
+            bottomGlobalNodalForces  = calculateNodalForces(bottomSigNLocal, bottomTauSLocal, bottomTauTLocal, bottomJacobian, bottomNormal, localAxis2)
+            
+            # Calculating p and y for each buried slice and store them in pYCollection
+            p, y = pYValues(lateralGlobalNodalForces, lateralUX, lateralElementConnectivity, lateralSlices,slice_heights, numberOfSlice)
+              
+            # Calculating M and theta for each buried slice and store them in MThetaCollection
+            M, T = mtValues(lateralGlobalNodalForces,lateralGlobalNodalForces_v, lateralUX, lateralUZ, lateralX, lateralElementConnectivity, lateralSlices, numberOfSlice)
             
             
             
             # Calculating Forces at Base:  FX, FZ and MY
-    		xRef, yRef = 0, 0                                                              #Activate for removing contribution of the plug
-    		nPlug = calculateNPlug (bottomNodalSigTot, pileProp['D'], 'Half')              #Activate for removing contribution of the plug
-    		pileBottomForce = getBottomForcesInPile(bottomGlobalNodalForces, bottomElementConnectivity, bottomInterfaceNodeCoordinates, xRef, nPlug) #, nPlug) include this inside parentesis   
-    		
-    		Base_shear=pileBottomForce[0]
-    		Base_moment=pileBottomForce[2]
+            xRef, yRef = 0, 0                                                              #Activate for removing contribution of the plug
+            nPlug = calculateNPlug (bottomNodalSigTot, pileProp['D'], 'Half')              #Activate for removing contribution of the plug
+            pileBottomForce = getBottomForcesInPile(bottomGlobalNodalForces, bottomElementConnectivity, bottomInterfaceNodeCoordinates, xRef, nPlug) #, nPlug) include this inside parentesis   
+            
+            Base_shear=pileBottomForce[0]
+            Base_moment=pileBottomForce[2]
                     
             # Calculating x-displacements an rotation at Base
-    		#X_base=sum(bottomDispX)/len(bottomDispX)
+            #X_base=sum(bottomDispX)/len(bottomDispX)
             
-    		index_surf4=[]
-    		for z, x in lateralX.items():
-    			if lateralInterfaceNodeCoordinates[z][2]==-pileProp['l']:
-    				index_surf4.append(z)
+            index_surf4=[]
+            for z, x in lateralX.items():
+                if lateralInterfaceNodeCoordinates[z][2]==-pileProp['l']:
+                    index_surf4.append(z)
                     
-    		disp_base=[0 for n in range(len(index_surf4))]
-    		n=0
-    		for ll in index_surf4:	   
-    			disp_base[n]=lateralUX[ll][0]
-    			n=n+1
+            disp_base=[0 for n in range(len(index_surf4))]
+            n=0
+            for ll in index_surf4:       
+                disp_base[n]=lateralUX[ll][0]
+                n=n+1
                 
-    		X_base= (sum(disp_base))/len(disp_base)
+            X_base= (sum(disp_base))/len(disp_base)
                         
-    		index_surf3=[]
-    		for w, j in lateralX.items():
-    			if (j==[pileProp['D']/2] or j==[-pileProp['D']/2]):
-    				if lateralInterfaceNodeCoordinates[w][2]==-pileProp['l']:
-    					index_surf3.append(w)				
-			
-    		rot_radiands_base=[0 for m in range(len(index_surf3))]
-    		m=0
-    		for q in index_surf3:	   
-    			rot_radiands_base[m]=math.atan(lateralUZ[q][0]/(lateralUX[q][0]+lateralX[q][0]))
-    			m=m+1
-	  
-    		Theta_base= (sum(rot_radiands_base))/len(rot_radiands_base)	         
-    		
-    		for slice in range(numberOfSlice):
-    			pYCollection2[slice][0].append(p[slice])
-    			pYCollection2[slice][1].append(y[slice])
-    			MthetaColleciton2[slice][0].append(M[slice])	
-    			MthetaColleciton2[slice][1].append(T[slice]) 
-    			
-    		Base_shearCollection2[0].append(Base_shear)
-    		Base_shearCollection2[1].append(X_base)
-    		Base_momentCollection2[0].append(Base_moment)
-    		Base_momentCollection2[1].append(Theta_base)   
-    		
-    		# Next step
-    		i = i + 1
+            index_surf3=[]
+            for w, j in lateralX.items():
+                if (j==[pileProp['D']/2] or j==[-pileProp['D']/2]):
+                    if lateralInterfaceNodeCoordinates[w][2]==-pileProp['l']:
+                        index_surf3.append(w)                
+            
+            rot_radiands_base=[0 for m in range(len(index_surf3))]
+            m=0
+            for q in index_surf3:       
+                rot_radiands_base[m]=math.atan(lateralUZ[q][0]/(lateralUX[q][0]+lateralX[q][0]))
+                m=m+1
+      
+            Theta_base= (sum(rot_radiands_base))/len(rot_radiands_base)             
+            
+            for slice in range(numberOfSlice):
+                pYCollection2[slice][0].append(p[slice])
+                pYCollection2[slice][1].append(y[slice])
+                MthetaColleciton2[slice][0].append(M[slice])    
+                MthetaColleciton2[slice][1].append(T[slice]) 
+                
+            Base_shearCollection2[0].append(Base_shear)
+            Base_shearCollection2[1].append(X_base)
+            Base_momentCollection2[0].append(Base_moment)
+            Base_momentCollection2[1].append(Theta_base)   
+            
+            # Next step
+            i = i + 1
     #################################################################################################
     #                                       CREATING CSV FILES                                      #
     #################################################################################################
@@ -2592,6 +2936,7 @@ def resultPostProcessing(df,results_directory):
     #########################################################################################################################
     #                                               Orsted excel                                                            #   
     #########################################################################################################################
+
     
     workbook = xlsxwriter.Workbook('FE_Orsted.xlsx')
     worksheet = workbook.add_worksheet("Shear")
@@ -2780,6 +3125,7 @@ def resultPostProcessing(df,results_directory):
     worksheet5.write('D'+str(49+numberOfSlice+3), 'Error',merge_format1)
         
     workbook.close()    
+
     
     
     g_o.close()
@@ -2789,6 +3135,7 @@ import os, sys, math, getInput#,input_cospin
 from plxscripting.easy import *
 import pandas as pd
 import csv, xlsxwriter
+from copy import deepcopy
 #s_i, g_i = new_server('localhost', 10000, password='!YNW<c6W>mg?Mt8v')
 
 
