@@ -15,10 +15,16 @@ from sklearn.linear_model import LinearRegression
 from math import *
 import os, xlsxwriter
 import array
+import os
 from os import walk
 import math
 import sys
 import ctypes
+from datetime import datetime, date, timezone
+from collections import Counter
+import xlsxwriter
+import openpyxl
+import shutil
 
 #f function
 def f(dependant, type_function, variable):
@@ -129,6 +135,7 @@ def Error_function(param_regression,input_data,poptM1,poptM2,poptM3,poptM4,poptM
 class Main:  
 
     print('============================Start=================================')
+    plt.close('all')
 
 def __init__(self): 
         self
@@ -152,7 +159,9 @@ print(df1)
 layout = [ [sg.Text('Input table for regression')],
            [sg.Text('Name'),sg.Input(k='-IN-'),sg.Text(size=(14,1), key='-OUT-')],
            [sg.Text('Date  '),sg.Input(k='-IN-'),sg.Text(size=(14,1), key='-OUT-')],
-           [sg.Button('Ready')] ]
+           [sg.Text('Source of the File '), sg.FilesBrowse()],
+           #[sg.Text('Source for Files', size=(15, 1)), sg.InputText(), sg.FilesBrowse()],
+           [sg.Button('Save Table'), sg.Button('Import Table'), sg.Button('Ready')] ]
 
 
 headings = ['Unit', 'Parameter', 'Automatic','Type g()','Type f()', 'Dependant', 'Model','Batch cyclic']
@@ -164,7 +173,7 @@ list2=['Yu','Pu','Kp','np','Teta','Mu','Km','nm','Yb','Hb','Kb','nb','TetaMb','M
 list3=['0','1']
 list4=['0','1','2']
 list5=['0','1','2']
-list6=['z_L','z_D','Dr','tan_phi','Su','G0','CSR','CF','Batch','L_D']
+list6=['Dr','tan_phi','Su','CSR','CF']
 list7=['ALL','NGI','GHS']
 list8=['ALL','A_FC1.4_OCR1_DR70','A_FC1.4_OCR1_DR83','A_FC1.4_OCR1_DR83_undrained','B_FC15.1_OCR1_DR69_undrained','Batch3_FC14_OCR1_DR77','Batch3_FC14_OCR6_DR80','19b_FC30_OCR6_DR50','20a_FC18_OCR6_DR80','21a_FC11_OCR1.3_DR35','21a_FC17_OCR1.5_DR85','Unit2a_OCR16_Ip16','Unit2c_OCR8_Ip37','C2_OCR6_Ip55','Drammen_Clay_4_PC2','Drammen_Clay_4_PH2','Drammen_Clay_4_PM2','Drammen_Clay_4_CC3']
 
@@ -172,18 +181,76 @@ input_rows = [[sg.Combo(list1, size=(20,1)),sg.Combo(list2, size=(20,1)),sg.Comb
 layout = layout + header + input_rows 
 window = sg.Window('Regression',layout,finalize=True)
 
+
 #Read GUI values
 while True: 
     event, values = window.read()
-    #print(event, values)
+    
+    if event:
+        window['-OUT-'].update(values)
+        if values['-IN-0']=='':
+            values['-IN-0']=datetime.now().date()
+            window['-IN-0'].Update(values['-IN-0'])
+        if values['-IN-']=='':
+            values['-IN-']='Regression'
+            window['-IN-'].Update(values['-IN-'])
+
     if event == sg.WIN_CLOSED or event == 'Ready':
         break
     window['-OUT-'].update(values['-IN-'])
+    
+    if event == 'Save Table':
+        print('Saved Table!')
+        title_txt=(str(values['-IN-'])+'_'+str(values['-IN-0'])+'.txt')
+        txt_file=open(str(title_txt),'w+')
+        
+        #txt_file.writelines('|')
+        txt_file.writelines(str(values['-IN-']))
+        #txt_file.writelines('\n')
+        txt_file.writelines('|')
+        txt_file.writelines(str(values['-IN-0']))
+        #txt_file.writelines('\n')
+        txt_file.writelines('|')
+        txt_file.writelines(str(values['Browse']))
+        #txt_file.writelines('\n')
+        
+        for index_write_txt in range(len(values)-3):
+            txt_file.writelines('|')
+            txt_file.writelines(str(values[index_write_txt]))
+            #txt_file.writelines('\n')
+
+        txt_file.close() 
+        
+    if event == 'Import Table':
+        if values['Browse']=='':
+            print('No table selected!')
+        else:
+            txt_file=open(values['Browse'],'r+')  
+            content=txt_file.read()
+            print(content)
+            counter_str=Counter(content)
+            number_count=counter_str['|']
+            print(number_count)
+            
+            content_split=content.split('|')
+            print(content_split)
+            print(range(len(content_split)))
+            
+            window['-IN-'].Update(content_split[0])
+            window['-IN-0'].Update(content_split[1])
+            window['Browse'].Update(content_split[2])
+            
+            index_write_table=0
+            for index_write_table in range(number_count-2):
+                window[index_write_table].Update(content_split[index_write_table+3])
+            
+            txt_file.close() 
+           
 window.close()
 
 #The GUI can be ignored filling the line below
 ###############################################################################
-#values={'-IN-': '', '-IN-0': '', 0: 'SS1', 1: 'Pu', 2: '1', 3: '0', 4: '2', 5: 'Dr', 6: 'ALL', 7: 'ALL', 8: 'PC1', 9: 'Pu', 10: '0', 11: '1', 12: '1', 13: 'Dr', 14: 'GHS', 15: 'ALL', 16: '', 17: '', 18: '', 19: '', 20: '', 21: '', 22: '', 23: '', 24: '', 25: '', 26: '', 27: '', 28: '', 29: '', 30: '', 31: '', 32: '', 33: '', 34: '', 35: '', 36: '', 37: '', 38: '', 39: '', 40: '', 41: '', 42: '', 43: '', 44: '', 45: '', 46: '', 47: '', 48: '', 49: '', 50: '', 51: '', 52: '', 53: '', 54: '', 55: '', 56: '', 57: '', 58: '', 59: '', 60: '', 61: '', 62: '', 63: '', 64: '', 65: '', 66: '', 67: '', 68: '', 69: '', 70: '', 71: '', 72: '', 73: '', 74: '', 75: '', 76: '', 77: '', 78: '', 79: ''}
+#values={'-IN-': '', '-IN-0': '', 0: 'SS1', 1: 'Pu', 2: '0', 3: '0', 4: '2', 5: 'Dr', 6: 'ALL', 7: 'ALL', 8: 'PC1', 9: 'Pu', 10: '0', 11: '1', 12: '1', 13: 'Dr', 14: 'GHS', 15: 'ALL', 16: '', 17: '', 18: '', 19: '', 20: '', 21: '', 22: '', 23: '', 24: '', 25: '', 26: '', 27: '', 28: '', 29: '', 30: '', 31: '', 32: '', 33: '', 34: '', 35: '', 36: '', 37: '', 38: '', 39: '', 40: '', 41: '', 42: '', 43: '', 44: '', 45: '', 46: '', 47: '', 48: '', 49: '', 50: '', 51: '', 52: '', 53: '', 54: '', 55: '', 56: '', 57: '', 58: '', 59: '', 60: '', 61: '', 62: '', 63: '', 64: '', 65: '', 66: '', 67: '', 68: '', 69: '', 70: '', 71: '', 72: '', 73: '', 74: '', 75: '', 76: '', 77: '', 78: '', 79: ''}
 ###############################################################################
 
 # =============================================================================
@@ -248,6 +315,7 @@ for i in range(len(list_toDo)):
             #print(j)
             if df1['Unit_name'].values[j]==values[list_toDo[i]*8] and (df1['Cons_Name'].values[j]==values[list_toDo[i]*8+6] or values[list_toDo[i]*8+6]=='ALL') and (df1['Contour_diagram_name'].values[j]==values[list_toDo[i]*8+7] or values[list_toDo[i]*8+7]=='ALL'):
                 k=k+1
+                Cons_name_excel=values[list_toDo[i]*8+6]
             else:
                 #remove the lines that do not validate: unit / model / contour chosen
                 array_regression=np.delete(array_regression,k,0)
@@ -265,8 +333,10 @@ for i in range(len(list_toDo)):
             index_g=0
             index_f=0
             index_table=0
+            index_excel_count=0
             error_table=[]
             error_max=[]
+            error_final_to_show=[]
             for index_sand in range(len(list_sand)):
                 for index_g in range(len(list_g)):
                     for index_f in range(len(list_f)):
@@ -454,35 +524,122 @@ for i in range(len(list_toDo)):
                                 if(type_g=='0'):
                                     if(type_f=='0'):
                                         plt.title(Unit[0]+": "+param_regression_str+"= ( "+param_regression_str+"_1= ("+str(round(poptM[0],2))+") )")
+                                        title_plot=str(Unit[0]+"_"+param_regression_str+"_f_"+type_f+"_g_"+type_g+"_dep_f_"+dependant_f_str+"_dep_g_"+dependant_g_str)
                                     elif(type_f=='1'):
                                         plt.title(Unit[0]+": "+param_regression_str+"= ( "+param_regression_str+"_1= ("+str(round(poptM[0],2))+"+"+str(round(poptM[1],2))+ "*"+dependant_f_str +") )")
+                                        title_plot=str(Unit[0]+"_"+param_regression_str+"_f_"+type_f+"_g_"+type_g+"_dep_f_"+dependant_f_str+"_dep_g_"+dependant_g_str)
                                     else:
                                         plt.title(Unit[0]+": "+param_regression_str+"= ( "+param_regression_str+"_1= ("+str(round(poptM[0],2))+"+"+str(round(poptM[1],2))+"*exp("+str(round(poptM[2],2))+"*"+dependant_f_str +") )")
+                                        title_plot=str(Unit[0]+"_"+param_regression_str+"_f_"+type_f+"_g_"+type_g+"_dep_f_"+dependant_f_str+"_dep_g_"+dependant_g_str)
                                 elif(type_g=='1'):
                                     if(type_f=='0'):
                                         plt.title(Unit[0]+": "+param_regression_str+"= ( "+param_regression_str+"_1= ("+str(round(poptM[0],2))+") "+"+ ("+param_regression_str+"_2= ("+str(round(poptM[1],2))+"))"+" *"+dependant_g_str+" )")
+                                        title_plot=str(Unit[0]+"_"+param_regression_str+"_f_"+type_f+"_g_"+type_g+"_dep_f_"+dependant_f_str+"_dep_g_"+dependant_g_str)
                                     elif(type_f=='1'):
                                         plt.title(Unit[0]+": "+param_regression_str+"= ( "+param_regression_str+"_1= ("+str(round(poptM[0],2))+"+"+str(round(poptM[1],2))+ "*"+dependant_f_str +") "+"+ ("+param_regression_str+"_2= ("+str(round(poptM[2],2))+"+"+str(round(poptM[3],2))+ "*"+dependant_f_str+"))"+" *"+dependant_g_str+" )")
+                                        title_plot=str(Unit[0]+"_"+param_regression_str+"_f_"+type_f+"_g_"+type_g+"_dep_f_"+dependant_f_str+"_dep_g_"+dependant_g_str)
                                     else:
                                         plt.title(Unit[0]+": "+param_regression_str+"= ( "+param_regression_str+"_1= ("+str(round(poptM[0],2))+"+"+str(round(poptM[1],2))+"*exp("+str(round(poptM[2],2))+ "*"+dependant_f_str +") "+"+ ("+param_regression_str+"_2= ("+str(round(poptM[3],2))+"+"+str(round(poptM[4],2))+"*exp("+str(round(poptM[5],2))+ "*"+dependant_f_str+"))"+" *"+dependant_g_str+" )")
+                                        title_plot=str(Unit[0]+"_"+param_regression_str+"_f_"+type_f+"_g_"+type_g+"_dep_f_"+dependant_f_str+"_dep_g_"+dependant_g_str)
                                 else:
                                      if(type_f=='0'):
                                          plt.title(Unit[0]+": "+param_regression_str+"= ( "+param_regression_str+"_1= ("+str(round(poptM[0],2))+") "+"+ ("+param_regression_str+"_2= ("+str(round(poptM[1],2))+"))"+"*exp("+param_regression_str+"_3= ("+str(round(poptM[2],2))+"))"+" *"+dependant_g_str+") )")
+                                         title_plot=str(Unit[0]+"_"+param_regression_str+"_f_"+type_f+"_g_"+type_g+"_dep_f_"+dependant_f_str+"_dep_g_"+dependant_g_str)
                                      elif(type_f=='1'):
                                          plt.title(Unit[0]+": "+param_regression_str+"= ( "+param_regression_str+"_1= ("+str(round(poptM[0],2))+"+"+str(round(poptM[1],2))+ "*"+dependant_f_str +") "+"+ ("+param_regression_str+"_2= ("+str(round(poptM[2],2))+"+"+str(round(poptM[3],2))+ "*"+dependant_f_str+"))"+"*exp("+param_regression_str+"_3= ("+str(round(poptM[4],2))+"+"+str(round(poptM[5],2))+"*"+dependant_f_str+")"+" *"+dependant_g_str+") )")
+                                         title_plot=str(Unit[0]+"_"+param_regression_str+"_f_"+type_f+"_g_"+type_g+"_dep_f_"+dependant_f_str+"_dep_g_"+dependant_g_str)
                                      else:
                                          plt.title(Unit[0]+": "+param_regression_str+"= ( "+param_regression_str+"_1= ("+str(round(poptM[0],2))+"+"+str(round(poptM[1],2))+"*exp("+str(round(poptM[2],2))+ "*"+dependant_f_str +") "+"+ ("+param_regression_str+"_2= ("+str(round(poptM[3],2))+"+"+str(round(poptM[4],2))+"*exp("+str(round(poptM[5],2))+ "*"+dependant_f_str+"))"+"*exp("+param_regression_str+"_3= ("+str(round(poptM[6],2))+"+"+str(round(poptM[7],2))+"*exp("+str(round(poptM[8],2))+"*"+dependant_f_str+"))"" *"+dependant_g_str+") )")
+                                         title_plot=str(Unit[0]+"_"+param_regression_str+"_f_"+type_f+"_g_"+type_g+"_dep_f_"+dependant_f_str+"_dep_g_"+dependant_g_str)
                                             
                                       
                                 #variable_total= [0.3667, 25.89, 0.3375, -8.9, 1, 1]     
+                                my_path = os.path.dirname(__file__)
+                                my_file = title_plot
+                                subdirectory=('\Plots_'+values['-IN-']+'_'+values['-IN-0'])
+                                full_path=(my_path+subdirectory+'/'+my_file+'.png')
+                                print(my_path)
+                                print(my_file)
+                                print(subdirectory)
+                                if not os.path.isdir(my_path+subdirectory):
+                                    os.makedirs(my_path+subdirectory)
+                        
+                                fig.savefig(full_path)
+                                
+                                title_excel_original='\Template.xlsx'
+                                title_excel_target='\Regression_parameters.xlsx'
+                                
+                                original=(my_path+title_excel_original)
+                                target=(my_path+subdirectory+title_excel_target)
+                                
+                                if not os.path.isfile(my_path+subdirectory+title_excel_target):
+                                    shutil.copyfile(original, target)
+                                
+                                my_file_excel=str(Unit[0]+"_"+param_regression_str+"_"+Cons_name_excel)
+                                
+                                workbook = openpyxl.load_workbook(target)
+                                if (my_file_excel in workbook.sheetnames) and index_excel_count==0:
+                                    workbook.remove_sheet(workbook.get_sheet_by_name(my_file_excel))
+                                    workbook.create_sheet(my_file_excel)
+                                elif index_excel_count==0: 
+                                    workbook.create_sheet(my_file_excel)
+                                
+                                sheet1=workbook['Template']
+                                sheet2=workbook[my_file_excel]
+                                
+                                if index_excel_count==0:
+                                
+
+                                    maxr = sheet1.max_row
+                                    maxc = sheet1.max_column
+                        
+                                    for r in range (1, maxr + 1):
+                                        for c in range (1, maxc + 1):
+                                            sheet2.cell(row=r,column=c).value = sheet1.cell(row=r,column=c).value
+                                    
+                                    index_row=0
+                                    index_column=0
+                                    
+                                    max_array_r=len(array_regression)
+                                    max_array_c=36
+                                    
+                                    for index_row in range(max_array_r):
+                                        for index_column in range(max_array_c):
+                                            sheet2.cell(row=index_row+3, column=index_column+1).value=array_regression[index_row][index_column]
+                                            
+                                
+                                index_variable=0
+                                
+                                for index_variable in range(len(poptM)):
+                                    sheet2.cell(row=index_excel_count+3, column=index_variable+44).value=poptM[index_variable]
+                                
+                                sheet2.cell(row=index_excel_count+3, column=54).value=dependant_f_str
+                                sheet2.cell(row=index_excel_count+3, column=55).value=dependant_g_str
+                                sheet2.cell(row=index_excel_count+3, column=57).value=type_f
+                                sheet2.cell(row=index_excel_count+3, column=58).value=type_g
+                                
+                                sheet2.cell(row=index_excel_count+3, column=38).value=param_regression_str
+                                
+
+                                
+                                
+                                print(index_excel_count)
                                 
                                 error=Error_function(param_regression,input_data,poptM[0],poptM[1],poptM[2],poptM[3],poptM[4],poptM[5],poptM[6],poptM[7],poptM[8])
                                 
                                 error_table=error_table+[('Error_',param_regression_str,'_f:',type_f,'_g:',type_g,'_dependant_f:',dependant_f_str,'_dependant_g:',dependant_g_str,'_error:',error)]
+                                error_final_to_show=error_final_to_show+[('Variables:',str(poptM))]
                                 error_max=error_max+[error]
                                 
                                 print('==================================================================')
                                 print('Error_predict: ', error)  
+                                
+                                sheet2.cell(row=index_excel_count+3, column=60).value=error
+                                workbook.save(target)
+                                workbook.close()
+                                index_excel_count=index_excel_count+1
+                                
+                                
                             except:
                                 pass
         else:
@@ -495,8 +652,10 @@ for i in range(len(list_toDo)):
             index_g=0
             index_f=0
             index_table=0
+            index_excel_count=0
             error_table=[]
             error_max=[]
+            error_final_to_show=[]
             for index_sand in range(len(list_clay)):
                 for index_g in range(len(list_g)):
                     for index_f in range(len(list_f)):
@@ -686,44 +845,135 @@ for i in range(len(list_toDo)):
                                 if(type_g=='0'):
                                     if(type_f=='0'):
                                         plt.title(Unit[0]+": "+param_regression_str+"= ( "+param_regression_str+"_1= ("+str(round(poptM[0],2))+") )")
+                                        title_plot=str(Unit[0]+"_"+param_regression_str+"_f_"+type_f+"_g_"+type_g+"_dep_f_"+dependant_f_str+"_dep_g_"+dependant_g_str)
                                     elif(type_f=='1'):
                                         plt.title(Unit[0]+": "+param_regression_str+"= ( "+param_regression_str+"_1= ("+str(round(poptM[0],2))+"+"+str(round(poptM[1],2))+ "*"+dependant_f_str +") )")
+                                        title_plot=str(Unit[0]+"_"+param_regression_str+"_f_"+type_f+"_g_"+type_g+"_dep_f_"+dependant_f_str+"_dep_g_"+dependant_g_str)
                                     else:
                                         plt.title(Unit[0]+": "+param_regression_str+"= ( "+param_regression_str+"_1= ("+str(round(poptM[0],2))+"+"+str(round(poptM[1],2))+"*exp("+str(round(poptM[2],2))+"*"+dependant_f_str +") )")
+                                        title_plot=str(Unit[0]+"_"+param_regression_str+"_f_"+type_f+"_g_"+type_g+"_dep_f_"+dependant_f_str+"_dep_g_"+dependant_g_str)
                                 elif(type_g=='1'):
                                     if(type_f=='0'):
                                         plt.title(Unit[0]+": "+param_regression_str+"= ( "+param_regression_str+"_1= ("+str(round(poptM[0],2))+") "+"+ ("+param_regression_str+"_2= ("+str(round(poptM[1],2))+"))"+" *"+dependant_g_str+" )")
+                                        title_plot=str(Unit[0]+"_"+param_regression_str+"_f_"+type_f+"_g_"+type_g+"_dep_f_"+dependant_f_str+"_dep_g_"+dependant_g_str)
                                     elif(type_f=='1'):
                                         plt.title(Unit[0]+": "+param_regression_str+"= ( "+param_regression_str+"_1= ("+str(round(poptM[0],2))+"+"+str(round(poptM[1],2))+ "*"+dependant_f_str +") "+"+ ("+param_regression_str+"_2= ("+str(round(poptM[2],2))+"+"+str(round(poptM[3],2))+ "*"+dependant_f_str+"))"+" *"+dependant_g_str+" )")
+                                        title_plot=str(Unit[0]+"_"+param_regression_str+"_f_"+type_f+"_g_"+type_g+"_dep_f_"+dependant_f_str+"_dep_g_"+dependant_g_str)
                                     else:
                                         plt.title(Unit[0]+": "+param_regression_str+"= ( "+param_regression_str+"_1= ("+str(round(poptM[0],2))+"+"+str(round(poptM[1],2))+"*exp("+str(round(poptM[2],2))+ "*"+dependant_f_str +") "+"+ ("+param_regression_str+"_2= ("+str(round(poptM[3],2))+"+"+str(round(poptM[4],2))+"*exp("+str(round(poptM[5],2))+ "*"+dependant_f_str+"))"+" *"+dependant_g_str+" )")
+                                        title_plot=str(Unit[0]+"_"+param_regression_str+"_f_"+type_f+"_g_"+type_g+"_dep_f_"+dependant_f_str+"_dep_g_"+dependant_g_str)
                                 else:
                                      if(type_f=='0'):
                                          plt.title(Unit[0]+": "+param_regression_str+"= ( "+param_regression_str+"_1= ("+str(round(poptM[0],2))+") "+"+ ("+param_regression_str+"_2= ("+str(round(poptM[1],2))+"))"+"*exp("+param_regression_str+"_3= ("+str(round(poptM[2],2))+"))"+" *"+dependant_g_str+") )")
+                                         title_plot=str(Unit[0]+"_"+param_regression_str+"_f_"+type_f+"_g_"+type_g+"_dep_f_"+dependant_f_str+"_dep_g_"+dependant_g_str)
                                      elif(type_f=='1'):
                                          plt.title(Unit[0]+": "+param_regression_str+"= ( "+param_regression_str+"_1= ("+str(round(poptM[0],2))+"+"+str(round(poptM[1],2))+ "*"+dependant_f_str +") "+"+ ("+param_regression_str+"_2= ("+str(round(poptM[2],2))+"+"+str(round(poptM[3],2))+ "*"+dependant_f_str+"))"+"*exp("+param_regression_str+"_3= ("+str(round(poptM[4],2))+"+"+str(round(poptM[5],2))+"*"+dependant_f_str+")"+" *"+dependant_g_str+") )")
+                                         title_plot=str(Unit[0]+"_"+param_regression_str+"_f_"+type_f+"_g_"+type_g+"_dep_f_"+dependant_f_str+"_dep_g_"+dependant_g_str)
                                      else:
                                          plt.title(Unit[0]+": "+param_regression_str+"= ( "+param_regression_str+"_1= ("+str(round(poptM[0],2))+"+"+str(round(poptM[1],2))+"*exp("+str(round(poptM[2],2))+ "*"+dependant_f_str +") "+"+ ("+param_regression_str+"_2= ("+str(round(poptM[3],2))+"+"+str(round(poptM[4],2))+"*exp("+str(round(poptM[5],2))+ "*"+dependant_f_str+"))"+"*exp("+param_regression_str+"_3= ("+str(round(poptM[6],2))+"+"+str(round(poptM[7],2))+"*exp("+str(round(poptM[8],2))+"*"+dependant_f_str+"))"" *"+dependant_g_str+") )")
-                                           
+                                         title_plot=str(Unit[0]+"_"+param_regression_str+"_f_"+type_f+"_g_"+type_g+"_dep_f_"+dependant_f_str+"_dep_g_"+dependant_g_str)
                                       
                                 #variable_total= [0.3667, 25.89, 0.3375, -8.9, 1, 1]     
+                                my_path = os.path.dirname(__file__)
+                                my_file = title_plot
+                                subdirectory=('\Plots_'+values['-IN-']+'_'+values['-IN-0'])
+                                full_path=(my_path+subdirectory+'/'+my_file+'.png')
+                                print(my_path)
+                                print(my_file)
+                                print(subdirectory)
+                                if not os.path.isdir(my_path+subdirectory):
+                                    os.makedirs(my_path+subdirectory)
+                        
+                                fig.savefig(full_path)
+                                
+                                title_excel_original='\Template.xlsx'
+                                title_excel_target='\Regression_parameters.xlsx'
+                                
+                                original=(my_path+title_excel_original)
+                                target=(my_path+subdirectory+title_excel_target)
+                                
+                                if not os.path.isfile(my_path+subdirectory+title_excel_target):
+                                    shutil.copyfile(original, target)
+                                
+                                my_file_excel=str(Unit[0]+"_"+param_regression_str+"_"+Cons_name_excel)
+                                
+                                workbook = openpyxl.load_workbook(target)
+                                if (my_file_excel in workbook.sheetnames) and index_excel_count==0:
+                                    workbook.remove_sheet(workbook.get_sheet_by_name(my_file_excel))
+                                    workbook.create_sheet(my_file_excel)
+                                elif index_excel_count==0: 
+                                    workbook.create_sheet(my_file_excel)
+                                
+                                sheet1=workbook['Template']
+                                sheet2=workbook[my_file_excel]
+                                
+                                if index_excel_count==0:
+                                
+
+                                    maxr = sheet1.max_row
+                                    maxc = sheet1.max_column
+                        
+                                    for r in range (1, maxr + 1):
+                                        for c in range (1, maxc + 1):
+                                            sheet2.cell(row=r,column=c).value = sheet1.cell(row=r,column=c).value
+                                    
+                                    index_row=0
+                                    index_column=0
+                                    
+                                    max_array_r=len(array_regression)
+                                    max_array_c=36
+                                    
+                                    for index_row in range(max_array_r):
+                                        for index_column in range(max_array_c):
+                                            sheet2.cell(row=index_row+3, column=index_column+1).value=array_regression[index_row][index_column]
+                                            
+                                
+                                index_variable=0
+                                
+                                for index_variable in range(len(poptM)):
+                                    sheet2.cell(row=index_excel_count+3, column=index_variable+44).value=poptM[index_variable]
+                                
+                                sheet2.cell(row=index_excel_count+3, column=54).value=dependant_f_str
+                                sheet2.cell(row=index_excel_count+3, column=55).value=dependant_g_str
+                                sheet2.cell(row=index_excel_count+3, column=57).value=type_f
+                                sheet2.cell(row=index_excel_count+3, column=58).value=type_g
+                                
+                                sheet2.cell(row=index_excel_count+3, column=38).value=param_regression_str
+                                
+                                                                
+                                
+                                print(index_excel_count)
                                 
                                 error=Error_function(param_regression,input_data,poptM[0],poptM[1],poptM[2],poptM[3],poptM[4],poptM[5],poptM[6],poptM[7],poptM[8])
                                 
                                 error_table=error_table+[('Error_',param_regression_str,'_f:',type_f,'_g:',type_g,'_dependant_f:',dependant_f_str,'_dependant_g:',dependant_g_str,'_error:',error)]
+                                error_final_to_show=error_final_to_show+[('Variables:',str(poptM))]
                                 error_max=error_max+[error]
                                 
                                 print('==================================================================')
                                 print('Error_predict: ', error)  
+                                
+                                sheet2.cell(row=index_excel_count+3, column=60).value=error
+                                workbook.save(target)
+                                workbook.close()
+                                index_excel_count=index_excel_count+1
                             except:
                                 pass
         print('==================================================================')
         print('Final_error_table:')
 
         index_table=0
+        error_brut=[]
         for index_table in range(len(error_table)):
             print(error_table[index_table])
+            error_brut=error_brut+[error_table[index_table][11]];
+        
+        #for index_brut in range(len(error_brut)):
             
+        array_brut=np.array(error_brut)
+        order=array_brut.argsort()
+        ranks=order.argsort()
+        
         print('==================================================================')
         print('Min_error_parameters_associated:')
         max_error=np.min(error_max)
@@ -733,6 +983,217 @@ for i in range(len(list_toDo)):
         
         #print(error_table)
         #sys.exit()
+        
+        for index_check_brut in range(len(ranks)):
+            position_brut=np.where(ranks==index_check_brut)[0][0]
+            array_full_str=error_table[position_brut]
+            array_to_show=error_final_to_show[position_brut]
+            
+            #Parameters level 1
+            Level_1=poptM
+            #dependant_g=input_data['dependant_g']
+            #dependant_f=input_data['dependant_f']
+            
+            check_Dr=[0.22,1]
+            check_tan_phi=[0.53,1.07]
+            check_CSR=[0.22,1.4]
+            check_CF=[0.5,4.6]
+            check_Su=[0,1200]
+            check_z_L=[0,1]
+            check_z_D=[0,5]
+            check_L_D=[3,5]
+            
+            #list6=['Dr','tan_phi','Su','CSR','CF']
+            
+            #check_sand=[check_Dr,check_tan_phi,check_CSR,check_CF]
+            #check_clay=[check_Su,check_CSR,check_CF]
+            
+            #check_g=[check_z_L,check_z_D,check_L_D]
+            
+            #if(Unit[0]=='SS1' or Unit[0]=='H2' or Unit[0]=='PC1' or Unit[0]=='PH1' or Unit[0]=='PM1' or Unit[0]=='PM3' or Unit[0]=='PM4' or Unit[0]=='PM5' or Unit[0]=='CC1'):
+            #    soil_type_str="Sand"
+            #    check=check_sand
+            #else:
+            #    soil_type_str="Clay"
+            #    check=check_clay
+             
+            dependant_f_str=array_full_str[7]
+            dependant_g_str=array_full_str[9]
+            type_f=array_full_str[3]
+            type_g=array_full_str[5]
+            
+            #Parameters check
+            if (dependant_f_str=='Dr'):
+                check_f=check_Dr
+            elif (dependant_f_str=='tan_phi'):
+                check_f=check_tan_phi
+            elif (dependant_f_str=='Su'):
+                check_f=check_Su
+            elif (dependant_f_str=='CSR'):
+                check_f=check_CSR
+            elif (dependant_f_str=='CF'):
+                check_f=check_CF
+            
+            
+            if (dependant_g_str=='z_L'):
+                check_g=check_z_L
+            elif (dependant_g_str=='z_D'):
+                check_g=check_z_D
+            elif (dependant_g_str=='L_D'):
+                check_g=check_L_D
+                
+            
+            PU_brut=[]
+            for index_check_f in range(len(check_f)):
+                for index_check_g in range(len(check_g)):
+                    
+                    dependant_g=check_g[index_check_g]
+                    dependant_f=check_f[index_check_f]
+                    
+                    if type_f=='0' and type_g=='0':
+                        Level_1_1=Level_1[0]
+                        Level_2_1=Level_1_1
+                        Level_3=Level_2_1
+                    elif type_f=='0' and type_g=='1':
+                        Level_1_1=Level_1[0]
+                        Level_1_2=Level_1[1]
+                        Level_2_1=Level_1_1
+                        Level_2_2=Level_1_2
+                        Level_3=Level_2_1+Level_2_2*dependant_g
+                    elif type_f=='0' and type_g=='2':
+                        Level_1_1=Level_1[0]
+                        Level_1_2=Level_1[1]
+                        Level_1_3=Level_1[2]
+                        Level_2_1=Level_1_1
+                        Level_2_2=Level_1_2
+                        Level_2_3=Level_1_3
+                        Level_3=Level_2_1+Level_2_2*np.exp(Level_2_3*dependant_g)
+                    elif type_f=='1' and type_g=='0':
+                        Level_1_1=Level_1[0]
+                        Level_1_2=Level_1[1]
+                        Level_2_1=Level_1_1+Level_1_2*dependant_f
+                        Level_3=Level_2_1
+                    elif type_f=='1' and type_g=='1':
+                        Level_1_1=Level_1[0]
+                        Level_1_2=Level_1[1]
+                        Level_1_3=Level_1[2]
+                        Level_1_4=Level_1[3]
+                        Level_2_1=Level_1_1+Level_1_2*dependant_f
+                        Level_2_2=Level_1_3+Level_1_4*dependant_f
+                        Level_3=Level_2_1+Level_2_2*dependant_g
+                    elif type_f=='1' and type_g=='2':
+                        Level_1_1=Level_1[0]
+                        Level_1_2=Level_1[1]
+                        Level_1_3=Level_1[2]
+                        Level_1_4=Level_1[3]
+                        Level_1_5=Level_1[4]
+                        Level_1_6=Level_1[5]
+                        Level_2_1=Level_1_1+Level_1_2*dependant_f
+                        Level_2_2=Level_1_3+Level_1_4*dependant_f
+                        Level_2_3=Level_1_5+Level_1_6*dependant_f
+                        Level_3=Level_2_1+Level_2_2*np.exp(Level_2_3*dependant_g)
+                    elif type_f=='2' and type_g=='0':
+                        Level_1_1=Level_1[0]
+                        Level_1_2=Level_1[1]
+                        Level_1_3=Level_1[2]
+                        Level_2_1=Level_1_1+Level_1_2*np.exp(Level_1_3*dependant_f)
+                        Level_3=Level_2_1
+                    elif type_f=='2' and type_g=='1':
+                        Level_1_1=Level_1[0]
+                        Level_1_2=Level_1[1]
+                        Level_1_3=Level_1[2]
+                        Level_1_4=Level_1[3]
+                        Level_1_5=Level_1[4]
+                        Level_1_6=Level_1[5]
+                        Level_2_1=Level_1_1+Level_1_2*np.exp(Level_1_3*dependant_f)
+                        Level_2_2=Level_1_4+Level_1_5*np.exp(Level_1_6*dependant_f)
+                        Level_3=Level_2_1+Level_2_2*dependant_g
+                    elif type_f=='2' and type_g=='2':
+                        Level_1_1=Level_1[0]
+                        Level_1_2=Level_1[1]
+                        Level_1_3=Level_1[2]
+                        Level_1_4=Level_1[3]
+                        Level_1_5=Level_1[4]
+                        Level_1_6=Level_1[5]
+                        Level_1_7=Level_1[6]
+                        Level_1_8=Level_1[7]
+                        Level_1_9=Level_1[8]
+                        Level_2_1=Level_1_1+Level_1_2*np.exp(Level_1_3*dependant_f)
+                        Level_2_2=Level_1_4+Level_1_5*np.exp(Level_1_6*dependant_f)
+                        Level_2_3=Level_1_7+Level_1_8*np.exp(Level_1_9*dependant_f)
+                        Level_3=Level_2_1+Level_2_2*np.exp(Level_2_3*dependant_g)
+                    
+                    PU_brut=PU_brut+[Level_3]
+                    print("PU: ",Level_3)
+                
+            if PU_brut[0]>=0 and PU_brut[1]>=0 and PU_brut[2]>=0 and PU_brut[3]>=0:
+                print('Validated - Automatic')
+                print(array_full_str)
+                print(array_to_show)
+                title_path=str(Unit[0]+"_"+param_regression_str+"_f_"+type_f+"_g_"+type_g+"_dep_f_"+dependant_f_str+"_dep_g_"+dependant_g_str)
+                full_path=(my_path+subdirectory+'/'+title_path+'.png')
+                
+                layout = [ [sg.Text('Best prediction for parameters defined:')],
+                           [sg.Image(full_path)],
+                           [sg.Text('Are you happy with this prediction?')],
+                           #[sg.Text('Source for Files', size=(15, 1)), sg.InputText(), sg.FilesBrowse()],
+                           [sg.Button('Yes'), sg.Button('No')] ]
+
+
+                layout = layout 
+                window = sg.Window('Final prediction',layout,finalize=True)
+
+
+                #Read GUI values
+                while True: 
+                    event, values = window.read()
+                    output=''
+
+                    if event == sg.WIN_CLOSED or event == 'Yes':
+                        output='Yes'
+                        break
+                    
+                    if event == 'No':
+                        output='No'
+                        break
+                    
+                window.close()
+                
+                if output=='Yes':
+                    my_file_kid='boy-kid'
+                    full_path_kid=(my_path+'/'+my_file_kid+'.gif')
+                    
+                    layout = [ [sg.Text('Well done!')],
+                               [sg.Image(full_path_kid, key='_IMAGE_')],
+                               #[sg.Image(full_path)],
+                               #[sg.Text('Source for Files', size=(15, 1)), sg.InputText(), sg.FilesBrowse()],
+                               [sg.Text(array_to_show[1])] ]
+
+
+                    layout = layout 
+                    window = sg.Window('Final prediction',layout,finalize=True)
+                    
+                    while True: 
+                        event, values = window.read(timeout=25)
+                        if event in (None, 'Exit', 'Cancel'):
+                            break
+                        window.Element('_IMAGE_').UpdateAnimation(full_path_kid, time_between_frames=50)
+                        
+                    break
+                else:
+                    print('Not validated - User choice')
+            else:
+                print('Not validated - Automatic')
+            
+        
+        
+        #Check automatic
+        #Rank the error_table
+        #For loop over the ranked table
+        #Check if PU >0
+        #If yes print final
+        #If not go to the next one and test
+        
     else :
         print('==================================================================')
         print('Non automatic regression selected!')
@@ -933,30 +1394,248 @@ for i in range(len(list_toDo)):
             if(type_g=='0'):
                 if(type_f=='0'):
                     plt.title(Unit[0]+": "+param_regression_str+"= ( "+param_regression_str+"_1= ("+str(round(poptM[0],2))+") )")
+                    title_plot=str(Unit[0]+"_"+param_regression_str+"_f_"+type_f+"_g_"+type_g+"_dep_f_"+dependant_f_str+"_dep_g_"+dependant_g_str)
                 elif(type_f=='1'):
                     plt.title(Unit[0]+": "+param_regression_str+"= ( "+param_regression_str+"_1= ("+str(round(poptM[0],2))+"+"+str(round(poptM[1],2))+ "*"+dependant_f_str +") )")
+                    title_plot=str(Unit[0]+"_"+param_regression_str+"_f_"+type_f+"_g_"+type_g+"_dep_f_"+dependant_f_str+"_dep_g_"+dependant_g_str)
                 else:
                     plt.title(Unit[0]+": "+param_regression_str+"= ( "+param_regression_str+"_1= ("+str(round(poptM[0],2))+"+"+str(round(poptM[1],2))+"*exp("+str(round(poptM[2],2))+"*"+dependant_f_str +") )")
+                    title_plot=str(Unit[0]+"_"+param_regression_str+"_f_"+type_f+"_g_"+type_g+"_dep_f_"+dependant_f_str+"_dep_g_"+dependant_g_str)
             elif(type_g=='1'):
                 if(type_f=='0'):
                     plt.title(Unit[0]+": "+param_regression_str+"= ( "+param_regression_str+"_1= ("+str(round(poptM[0],2))+") "+"+ ("+param_regression_str+"_2= ("+str(round(poptM[1],2))+"))"+" *"+dependant_g_str+" )")
+                    title_plot=str(Unit[0]+"_"+param_regression_str+"_f_"+type_f+"_g_"+type_g+"_dep_f_"+dependant_f_str+"_dep_g_"+dependant_g_str)
                 elif(type_f=='1'):
                     plt.title(Unit[0]+": "+param_regression_str+"= ( "+param_regression_str+"_1= ("+str(round(poptM[0],2))+"+"+str(round(poptM[1],2))+ "*"+dependant_f_str +") "+"+ ("+param_regression_str+"_2= ("+str(round(poptM[2],2))+"+"+str(round(poptM[3],2))+ "*"+dependant_f_str+"))"+" *"+dependant_g_str+" )")
+                    title_plot=str(Unit[0]+"_"+param_regression_str+"_f_"+type_f+"_g_"+type_g+"_dep_f_"+dependant_f_str+"_dep_g_"+dependant_g_str)
                 else:
                     plt.title(Unit[0]+": "+param_regression_str+"= ( "+param_regression_str+"_1= ("+str(round(poptM[0],2))+"+"+str(round(poptM[1],2))+"*exp("+str(round(poptM[2],2))+ "*"+dependant_f_str +") "+"+ ("+param_regression_str+"_2= ("+str(round(poptM[3],2))+"+"+str(round(poptM[4],2))+"*exp("+str(round(poptM[5],2))+ "*"+dependant_f_str+"))"+" *"+dependant_g_str+" )")
+                    title_plot=str(Unit[0]+"_"+param_regression_str+"_f_"+type_f+"_g_"+type_g+"_dep_f_"+dependant_f_str+"_dep_g_"+dependant_g_str)
             else:
-                 if(type_f=='0'):
+                if(type_f=='0'):
                      plt.title(Unit[0]+": "+param_regression_str+"= ( "+param_regression_str+"_1= ("+str(round(poptM[0],2))+") "+"+ ("+param_regression_str+"_2= ("+str(round(poptM[1],2))+"))"+"*exp("+param_regression_str+"_3= ("+str(round(poptM[2],2))+"))"+" *"+dependant_g_str+") )")
-                 elif(type_f=='1'):
+                     title_plot=str(Unit[0]+"_"+param_regression_str+"_f_"+type_f+"_g_"+type_g+"_dep_f_"+dependant_f_str+"_dep_g_"+dependant_g_str)
+                elif(type_f=='1'):
                      plt.title(Unit[0]+": "+param_regression_str+"= ( "+param_regression_str+"_1= ("+str(round(poptM[0],2))+"+"+str(round(poptM[1],2))+ "*"+dependant_f_str +") "+"+ ("+param_regression_str+"_2= ("+str(round(poptM[2],2))+"+"+str(round(poptM[3],2))+ "*"+dependant_f_str+"))"+"*exp("+param_regression_str+"_3= ("+str(round(poptM[4],2))+"+"+str(round(poptM[5],2))+"*"+dependant_f_str+")"+" *"+dependant_g_str+") )")
-                 else:
+                     title_plot=str(Unit[0]+"_"+param_regression_str+"_f_"+type_f+"_g_"+type_g+"_dep_f_"+dependant_f_str+"_dep_g_"+dependant_g_str)
+                else:
                      plt.title(Unit[0]+": "+param_regression_str+"= ( "+param_regression_str+"_1= ("+str(round(poptM[0],2))+"+"+str(round(poptM[1],2))+"*exp("+str(round(poptM[2],2))+ "*"+dependant_f_str +") "+"+ ("+param_regression_str+"_2= ("+str(round(poptM[3],2))+"+"+str(round(poptM[4],2))+"*exp("+str(round(poptM[5],2))+ "*"+dependant_f_str+"))"+"*exp("+param_regression_str+"_3= ("+str(round(poptM[6],2))+"+"+str(round(poptM[7],2))+"*exp("+str(round(poptM[8],2))+"*"+dependant_f_str+"))"" *"+dependant_g_str+") )")
-                  
+                     title_plot=str(Unit[0]+"_"+param_regression_str+"_f_"+type_f+"_g_"+type_g+"_dep_f_"+dependant_f_str+"_dep_g_"+dependant_g_str)
+                     
             #variable_total= [0.3667, 25.89, 0.3375, -8.9, 1, 1]     
+
+            my_path = os.path.dirname(__file__)
+            my_file = title_plot
+            subdirectory=('\Plots_'+values['-IN-']+'_'+values['-IN-0'])
+            full_path=(my_path+subdirectory+'/'+my_file+'.png')
+            print(my_path)
+            print(my_file)
+            print(subdirectory)
+            if not os.path.isdir(my_path+subdirectory):
+                os.makedirs(my_path+subdirectory)
+    
+            fig.savefig(full_path)
+            
+            title_excel_original='\Template.xlsx'
+            title_excel_target='\Regression_parameters.xlsx'
+            
+            original=(my_path+title_excel_original)
+            target=(my_path+subdirectory+title_excel_target)
+            
+            if not os.path.isfile(my_path+subdirectory+title_excel_target):
+                shutil.copyfile(original, target)
+            
+            my_file_excel=str(Unit[0]+"_"+param_regression_str+"_"+type_f+"_"+type_g+"_"+dependant_f_str+"_"+dependant_g_str)
+            
+            workbook = openpyxl.load_workbook(target)
+            if my_file_excel in workbook.sheetnames:
+                workbook.remove_sheet(workbook.get_sheet_by_name(my_file_excel))
+                workbook.create_sheet(my_file_excel)
+            else: 
+                workbook.create_sheet(my_file_excel)
+                
+            sheet1=workbook['Template']
+            sheet2=workbook[my_file_excel]
+            
+            maxr = sheet1.max_row
+            maxc = sheet1.max_column
+
+            for r in range (1, maxr + 1):
+                for c in range (1, maxc + 1):
+                    sheet2.cell(row=r,column=c).value = sheet1.cell(row=r,column=c).value
+            
+            index_row=0
+            index_column=0
+            
+            max_array_r=len(array_regression)
+            max_array_c=36
+            
+            for index_row in range(max_array_r):
+                for index_column in range(max_array_c):
+                    sheet2.cell(row=index_row+3, column=index_column+1).value=array_regression[index_row][index_column]
+            
+            index_variable=0
+            
+            for index_variable in range(len(poptM)):
+                sheet2.cell(row=3, column=index_variable+44).value=poptM[index_variable]
+            
+            sheet2.cell(row=3, column=54).value=dependant_f_str
+            sheet2.cell(row=3, column=55).value=dependant_g_str
+            sheet2.cell(row=3, column=57).value=type_f
+            sheet2.cell(row=3, column=58).value=type_g
+            
+            sheet2.cell(row=3, column=38).value=param_regression_str
+            
+            
+            
             
             error=Error_function(param_regression,input_data,poptM[0],poptM[1],poptM[2],poptM[3],poptM[4],poptM[5],poptM[6],poptM[7],poptM[8])
             print('==================================================================')
-            print('Error_predict: ', error)  
+            print('Error_predict: ', error) 
+            
+            sheet2.cell(row=3, column=60).value=error
+            workbook.save(target)
+            workbook.close()
+            
+            #Parameters level 1
+            Level_1=poptM
+            #dependant_g=input_data['dependant_g']
+            #dependant_f=input_data['dependant_f']
+            
+            check_Dr=[0.22,1]
+            check_tan_phi=[0.53,1.07]
+            check_CSR=[0.22,1.4]
+            check_CF=[0.5,4.6]
+            check_Su=[0,1200]
+            check_z_L=[0,1]
+            check_z_D=[0,5]
+            check_L_D=[3,5]
+            
+            #list6=['Dr','tan_phi','Su','CSR','CF']
+            
+            #check_sand=[check_Dr,check_tan_phi,check_CSR,check_CF]
+            #check_clay=[check_Su,check_CSR,check_CF]
+            
+            #check_g=[check_z_L,check_z_D,check_L_D]
+            
+            #if(Unit[0]=='SS1' or Unit[0]=='H2' or Unit[0]=='PC1' or Unit[0]=='PH1' or Unit[0]=='PM1' or Unit[0]=='PM3' or Unit[0]=='PM4' or Unit[0]=='PM5' or Unit[0]=='CC1'):
+            #    soil_type_str="Sand"
+            #    check=check_sand
+            #else:
+            #    soil_type_str="Clay"
+            #    check=check_clay
+                
+            
+            #Parameters check
+            if (dependant_f_str=='Dr'):
+                check_f=check_Dr
+            elif (dependant_f_str=='tan_phi'):
+                check_f=check_tan_phi
+            elif (dependant_f_str=='Su'):
+                check_f=check_Su
+            elif (dependant_f_str=='CSR'):
+                check_f=check_CSR
+            elif (dependant_f_str=='CF'):
+                check_f=check_CF
+            
+            
+            if (dependant_g_str=='z_L'):
+                check_g=check_z_L
+            elif (dependant_g_str=='z_D'):
+                check_g=check_z_D
+            elif (dependant_g_str=='L_D'):
+                check_g=check_L_D
+                
+            
+            
+            for index_check_f in range(len(check_f)):
+                for index_check_g in range(len(check_g)):
+                    
+                    dependant_g=check_g[index_check_g]
+                    dependant_f=check_f[index_check_f]
+                    
+                    if type_f=='0' and type_g=='0':
+                        Level_1_1=Level_1[0]
+                        Level_2_1=Level_1_1
+                        Level_3=Level_2_1
+                    elif type_f=='0' and type_g=='1':
+                        Level_1_1=Level_1[0]
+                        Level_1_2=Level_1[1]
+                        Level_2_1=Level_1_1
+                        Level_2_2=Level_1_2
+                        Level_3=Level_2_1+Level_2_2*dependant_g
+                    elif type_f=='0' and type_g=='2':
+                        Level_1_1=Level_1[0]
+                        Level_1_2=Level_1[1]
+                        Level_1_3=Level_1[2]
+                        Level_2_1=Level_1_1
+                        Level_2_2=Level_1_2
+                        Level_2_3=Level_1_3
+                        Level_3=Level_2_1+Level_2_2*np.exp(Level_2_3*dependant_g)
+                    elif type_f=='1' and type_g=='0':
+                        Level_1_1=Level_1[0]
+                        Level_1_2=Level_1[1]
+                        Level_2_1=Level_1_1+Level_1_2*dependant_f
+                        Level_3=Level_2_1
+                    elif type_f=='1' and type_g=='1':
+                        Level_1_1=Level_1[0]
+                        Level_1_2=Level_1[1]
+                        Level_1_3=Level_1[2]
+                        Level_1_4=Level_1[3]
+                        Level_2_1=Level_1_1+Level_1_2*dependant_f
+                        Level_2_2=Level_1_3+Level_1_4*dependant_f
+                        Level_3=Level_2_1+Level_2_2*dependant_g
+                    elif type_f=='1' and type_g=='2':
+                        Level_1_1=Level_1[0]
+                        Level_1_2=Level_1[1]
+                        Level_1_3=Level_1[2]
+                        Level_1_4=Level_1[3]
+                        Level_1_5=Level_1[4]
+                        Level_1_6=Level_1[5]
+                        Level_2_1=Level_1_1+Level_1_2*dependant_f
+                        Level_2_2=Level_1_3+Level_1_4*dependant_f
+                        Level_2_3=Level_1_5+Level_1_6*dependant_f
+                        Level_3=Level_2_1+Level_2_2*np.exp(Level_2_3*dependant_g)
+                    elif type_f=='2' and type_g=='0':
+                        Level_1_1=Level_1[0]
+                        Level_1_2=Level_1[1]
+                        Level_1_3=Level_1[2]
+                        Level_2_1=Level_1_1+Level_1_2*np.exp(Level_1_3*dependant_f)
+                        Level_3=Level_2_1
+                    elif type_f=='2' and type_g=='1':
+                        Level_1_1=Level_1[0]
+                        Level_1_2=Level_1[1]
+                        Level_1_3=Level_1[2]
+                        Level_1_4=Level_1[3]
+                        Level_1_5=Level_1[4]
+                        Level_1_6=Level_1[5]
+                        Level_2_1=Level_1_1+Level_1_2*np.exp(Level_1_3*dependant_f)
+                        Level_2_2=Level_1_4+Level_1_5*np.exp(Level_1_6*dependant_f)
+                        Level_3=Level_2_1+Level_2_2*dependant_g
+                    elif type_f=='2' and type_g=='2':
+                        Level_1_1=Level_1[0]
+                        Level_1_2=Level_1[1]
+                        Level_1_3=Level_1[2]
+                        Level_1_4=Level_1[3]
+                        Level_1_5=Level_1[4]
+                        Level_1_6=Level_1[5]
+                        Level_1_7=Level_1[6]
+                        Level_1_8=Level_1[7]
+                        Level_1_9=Level_1[8]
+                        Level_2_1=Level_1_1+Level_1_2*np.exp(Level_1_3*dependant_f)
+                        Level_2_2=Level_1_4+Level_1_5*np.exp(Level_1_6*dependant_f)
+                        Level_2_3=Level_1_7+Level_1_8*np.exp(Level_1_9*dependant_f)
+                        Level_3=Level_2_1+Level_2_2*np.exp(Level_2_3*dependant_g)
+        
+                    print("PU: ",Level_3)
+                    
+                    if(Level_3 >=0):
+                        print('Validated')
+                    else:
+                        print('Not validated')
+                    
         except:
-            print('Maximum iteration reached for CurveFit function')
+            print('Maximum iteration reached for CurveFit function')          
+        
             pass
+
