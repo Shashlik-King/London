@@ -101,11 +101,11 @@ end
 % ksmomtop is the tangent stiffness, i.e. ksmomtop = dm/dteta evaluated at teta = 0. 
 % Similar for ksmombot
 
-if tetatop == 0;
+if tetatop == 0 && xtop==0 
     %ksmomtop = k_bot*xtop;%gives infinity for 0 displacement and 0 depth
     ksmomtop = 0;
-elseif xtop == 0;
-    ksmomtop = 0;
+elseif tetatop == 0 
+    ksmomtop = k_top*xtop;
 else
 	ksmomtop = mtop/tetatop;
 end
