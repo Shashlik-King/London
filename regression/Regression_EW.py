@@ -152,6 +152,7 @@ df1=pd.DataFrame(df, columns=['Unit_name','Cons_Name','Project_name','Location_n
 print('==================================================================')
 print('Dataframe extracted from mySQL:')
 print(df1)
+conn.close()
     
 # =============================================================================
 #GUI construction
@@ -628,7 +629,7 @@ for i in range(len(list_toDo)):
                                 error=Error_function(param_regression,input_data,poptM[0],poptM[1],poptM[2],poptM[3],poptM[4],poptM[5],poptM[6],poptM[7],poptM[8])
                                 
                                 error_table=error_table+[('Error_',param_regression_str,'_f:',type_f,'_g:',type_g,'_dependant_f:',dependant_f_str,'_dependant_g:',dependant_g_str,'_error:',error)]
-                                error_final_to_show=error_final_to_show+[('Variables:',str(poptM))]
+                                error_final_to_show=error_final_to_show+[('Variables:',str(poptM[0]),str(poptM[1]),str(poptM[2]),str(poptM[3]),str(poptM[4]),str(poptM[5]),str(poptM[6]),str(poptM[7]),str(poptM[8]))]
                                 error_max=error_max+[error]
                                 
                                 print('==================================================================')
@@ -947,7 +948,7 @@ for i in range(len(list_toDo)):
                                 error=Error_function(param_regression,input_data,poptM[0],poptM[1],poptM[2],poptM[3],poptM[4],poptM[5],poptM[6],poptM[7],poptM[8])
                                 
                                 error_table=error_table+[('Error_',param_regression_str,'_f:',type_f,'_g:',type_g,'_dependant_f:',dependant_f_str,'_dependant_g:',dependant_g_str,'_error:',error)]
-                                error_final_to_show=error_final_to_show+[('Variables:',str(poptM))]
+                                error_final_to_show=error_final_to_show+[('Variables:',str(poptM[0]),str(poptM[1]),str(poptM[2]),str(poptM[3]),str(poptM[4]),str(poptM[5]),str(poptM[6]),str(poptM[7]),str(poptM[8]))]
                                 error_max=error_max+[error]
                                 
                                 print('==================================================================')
@@ -990,10 +991,171 @@ for i in range(len(list_toDo)):
             array_to_show=error_final_to_show[position_brut]
             
             #Parameters level 1
-            Level_1=poptM
+            Level_1=[float(array_to_show[1]),float(array_to_show[2]),float(array_to_show[3]),float(array_to_show[4]),float(array_to_show[5]),float(array_to_show[6]),float(array_to_show[7]),float(array_to_show[8]),float(array_to_show[9])]
             #dependant_g=input_data['dependant_g']
             #dependant_f=input_data['dependant_f']
             
+            #SS1
+            check_Dr=[0.52,1]
+            check_tan_phi=[0.55,0.93]
+            check_CSR=[0.22,1.4]
+            check_CF=[0.5,4.6]
+            check_Su=[0,1200]
+            check_z_L=[0,0.2]
+            check_z_D=[0,1]
+            check_L_D=[3,5]
+            
+            #H1
+            check_Dr=[0.52,1]
+            check_tan_phi=[0.55,0.93]
+            check_CSR=[0.22,1.4]
+            check_CF=[0.5,4.6]
+            check_Su=[0,488]
+            check_z_L=[0,0.2]
+            check_z_D=[0,1]
+            check_L_D=[3,5]
+            
+            #H2
+            check_Dr=[0.22,1]
+            check_tan_phi=[0.83,1.07]
+            check_CSR=[0.22,1.4]
+            check_CF=[0.5,4.6]
+            check_Su=[0,1200]
+            check_z_L=[0,0.3]
+            check_z_D=[0,1.5]
+            check_L_D=[3,5]
+            
+            #H3
+            check_Dr=[0.22,1]
+            check_tan_phi=[0.83,1.07]
+            check_CSR=[0.22,1.4]
+            check_CF=[0.5,4.6]
+            check_Su=[21,402]
+            check_z_L=[0,0.3]
+            check_z_D=[0,1.5]
+            check_L_D=[3,5]
+            
+            #PC1
+            check_Dr=[0.26,1]
+            check_tan_phi=[0.55,0.93]
+            check_CSR=[0.22,1.4]
+            check_CF=[0.5,4.6]
+            check_Su=[21,402]
+            check_z_L=[0,1]
+            check_z_D=[0,5]
+            check_L_D=[3,5]
+            
+            #PC2
+            check_Dr=[0.26,1]
+            check_tan_phi=[0.55,0.93]
+            check_CSR=[0.22,1.4]
+            check_CF=[0.5,4.6]
+            check_Su=[24,713]
+            check_z_L=[0,1]
+            check_z_D=[0,3]
+            check_L_D=[3,5]
+            
+            #PH1
+            check_Dr=[0.57,0.84]
+            check_tan_phi=[0.55,0.60]
+            check_CSR=[0.22,1.4]
+            check_CF=[0.5,4.6]
+            check_Su=[24,713]
+            check_z_L=[0.1,1]
+            check_z_D=[1,5]
+            check_L_D=[3,5]
+            
+            #PH2
+            check_Dr=[0.57,0.84]
+            check_tan_phi=[0.55,0.60]
+            check_CSR=[0.22,1.4]
+            check_CF=[0.5,4.6]
+            check_Su=[99,728]
+            check_z_L=[0.2,1]
+            check_z_D=[1,5]
+            check_L_D=[3,5]
+            
+            #PM1
+            check_Dr=[0.55,0.92]
+            check_tan_phi=[0.70,0.84]
+            check_CSR=[0.22,1.4]
+            check_CF=[0.5,4.6]
+            check_Su=[99,728]
+            check_z_L=[0.2,0.8]
+            check_z_D=[1,3]
+            check_L_D=[3,5]
+            
+            #PM2
+            check_Dr=[0.55,0.92]
+            check_tan_phi=[0.70,0.84]
+            check_CSR=[0.22,1.4]
+            check_CF=[0.5,4.6]
+            check_Su=[14,1200]
+            check_z_L=[0,1]
+            check_z_D=[0,5]
+            check_L_D=[3,5]
+            
+            #PM3
+            check_Dr=[0.51,1]
+            check_tan_phi=[0.55,0.65]
+            check_CSR=[0.22,1.4]
+            check_CF=[0.5,4.6]
+            check_Su=[14,1200]
+            check_z_L=[0.1,1]
+            check_z_D=[0.8,5]
+            check_L_D=[3,5]
+            
+            #PM4
+            check_Dr=[0.37,0.94]
+            check_tan_phi=[0.55,0.65]
+            check_CSR=[0.22,1.4]
+            check_CF=[0.5,4.6]
+            check_Su=[14,1200]
+            check_z_L=[0.1,1]
+            check_z_D=[0.5,5]
+            check_L_D=[3,5]
+            
+            #PM5
+            check_Dr=[0.22,1]
+            check_tan_phi=[0.55,0.94]
+            check_CSR=[0.22,1.4]
+            check_CF=[0.5,4.6]
+            check_Su=[14,1200]
+            check_z_L=[0,1]
+            check_z_D=[0,5]
+            check_L_D=[3,5]
+            
+            #CC1
+            check_Dr=[0.38,0.94]
+            check_tan_phi=[0.60,0.81]
+            check_CSR=[0.22,1.4]
+            check_CF=[0.5,4.6]
+            check_Su=[14,1200]
+            check_z_L=[0.2,1]
+            check_z_D=[1,5]
+            check_L_D=[3,5]
+            
+            #CC2
+            check_Dr=[0.38,0.94]
+            check_tan_phi=[0.60,0.81]
+            check_CSR=[0.22,1.4]
+            check_CF=[0.5,4.6]
+            check_Su=[45,1200]
+            check_z_L=[0,1]
+            check_z_D=[0,5]
+            check_L_D=[3,5]
+            
+            #CC3
+            check_Dr=[0.38,0.94]
+            check_tan_phi=[0.60,0.81]
+            check_CSR=[0.22,1.4]
+            check_CF=[0.5,4.6]
+            check_Su=[39,815]
+            check_z_L=[0,1]
+            check_z_D=[0,5]
+            check_L_D=[3,5]
+            
+            #ALL
             check_Dr=[0.22,1]
             check_tan_phi=[0.53,1.07]
             check_CSR=[0.22,1.4]
@@ -1049,6 +1211,15 @@ for i in range(len(list_toDo)):
                     
                     dependant_g=check_g[index_check_g]
                     dependant_f=check_f[index_check_f]
+                    
+# =============================================================================
+#                     print(dependant_g)
+#                     print(dependant_f)
+#                     print(type_f)
+#                     print(type_g)
+#                     print(Level_1[0])
+# =============================================================================
+                    print(Level_1[0])
                     
                     if type_f=='0' and type_g=='0':
                         Level_1_1=Level_1[0]
@@ -1134,10 +1305,11 @@ for i in range(len(list_toDo)):
                 full_path=(my_path+subdirectory+'/'+title_path+'.png')
                 
                 layout = [ [sg.Text('Best prediction for parameters defined:')],
-                           [sg.Image(full_path)],
                            [sg.Text('Are you happy with this prediction?')],
                            #[sg.Text('Source for Files', size=(15, 1)), sg.InputText(), sg.FilesBrowse()],
-                           [sg.Button('Yes'), sg.Button('No')] ]
+                           [sg.Button('Yes'), sg.Button('No')],
+                           [sg.Image(full_path)]]
+                           
 
 
                 layout = layout 
@@ -1163,23 +1335,172 @@ for i in range(len(list_toDo)):
                     my_file_kid='boy-kid'
                     full_path_kid=(my_path+'/'+my_file_kid+'.gif')
                     
+                    if type_f=='0' and type_g=='0':
+                        Level_1_1=Level_1[0]
+                        Level_1_2=None
+                        Level_1_3=None
+                        Level_2_1=None
+                        Level_2_2=None
+                        Level_2_3=None
+                        Level_3_1=None
+                        Level_3_2=None
+                        Level_3_3=None
+
+                    elif type_f=='0' and type_g=='1':
+                        Level_1_1=Level_1[0]
+                        Level_1_2=None
+                        Level_1_3=None
+                        Level_2_1=Level_1[1]
+                        Level_2_2=None
+                        Level_2_3=None
+                        Level_3_1=None
+                        Level_3_2=None
+                        Level_3_3=None
+
+                    elif type_f=='0' and type_g=='2':
+                        Level_1_1=Level_1[0]
+                        Level_1_2=None
+                        Level_1_3=None
+                        Level_2_1=Level_1[1]
+                        Level_2_2=None
+                        Level_2_3=None
+                        Level_3_1=Level_1[2]
+                        Level_3_2=None
+                        Level_3_3=None
+
+                    elif type_f=='1' and type_g=='0':
+                        Level_1_1=Level_1[0]
+                        Level_1_2=Level_1[1]
+                        Level_1_3=None
+                        Level_2_1=None
+                        Level_2_2=None
+                        Level_2_3=None
+                        Level_3_1=None
+                        Level_3_2=None
+                        Level_3_3=None
+
+                    elif type_f=='1' and type_g=='1':
+                        Level_1_1=Level_1[0]
+                        Level_1_2=Level_1[1]
+                        Level_1_3=None
+                        Level_2_1=Level_1[2]
+                        Level_2_2=Level_1[3]
+                        Level_2_3=None
+                        Level_3_1=None
+                        Level_3_2=None
+                        Level_3_3=None
+
+                    elif type_f=='1' and type_g=='2':
+                        Level_1_1=Level_1[0]
+                        Level_1_2=Level_1[1]
+                        Level_1_3=None
+                        Level_2_1=Level_1[2]
+                        Level_2_2=Level_1[3]
+                        Level_2_3=None
+                        Level_3_1=Level_1[4]
+                        Level_3_2=Level_1[5]
+                        Level_3_3=None
+
+                    elif type_f=='2' and type_g=='0':
+                        Level_1_1=Level_1[0]
+                        Level_1_2=Level_1[1]
+                        Level_1_3=Level_1[2]
+                        Level_2_1=None
+                        Level_2_2=None
+                        Level_2_3=None
+                        Level_3_1=None
+                        Level_3_2=None
+                        Level_3_3=None
+
+                    elif type_f=='2' and type_g=='1':
+                        Level_1_1=Level_1[0]
+                        Level_1_2=Level_1[1]
+                        Level_1_3=Level_1[2]
+                        Level_2_1=Level_1[3]
+                        Level_2_2=Level_1[4]
+                        Level_2_3=Level_1[5]
+                        Level_3_1=None
+                        Level_3_2=None
+                        Level_3_3=None
+
+                    elif type_f=='2' and type_g=='2':
+                        Level_1_1=Level_1[0]
+                        Level_1_2=Level_1[1]
+                        Level_1_3=Level_1[2]
+                        Level_2_1=Level_1[3]
+                        Level_2_2=Level_1[4]
+                        Level_2_3=Level_1[5]
+                        Level_3_1=Level_1[6]
+                        Level_3_2=Level_1[7]
+                        Level_3_3=Level_1[8]
+
+                    
                     layout = [ [sg.Text('Well done!')],
                                [sg.Image(full_path_kid, key='_IMAGE_')],
                                #[sg.Image(full_path)],
                                #[sg.Text('Source for Files', size=(15, 1)), sg.InputText(), sg.FilesBrowse()],
-                               [sg.Text(array_to_show[1])] ]
-
-
+                               [sg.Text(str('Soil unit: '+Unit[0]+' - '+'Parameter: '+ array_full_str[1]))],
+                               [sg.Text(str('Variable_1_1: '+str(Level_1_1)))],
+                               [sg.Text(str('Variable_1_2: '+str(Level_1_2)))],
+                               [sg.Text(str('Variable_1_3: '+str(Level_1_3)))],
+                               [sg.Text(str('Variable_2_1: '+str(Level_2_1)))],
+                               [sg.Text(str('Variable_2_2: '+str(Level_2_2)))],
+                               [sg.Text(str('Variable_2_3: '+str(Level_2_3)))],
+                               [sg.Text(str('Variable_3_1: '+str(Level_3_1)))],
+                               [sg.Text(str('Variable_3_2: '+str(Level_3_2)))],
+                               [sg.Text(str('Variable_3_3: '+str(Level_3_3)))],
+                               [sg.Text(str('Type_f: '+type_f+' - '+'Dependant_f: '+ dependant_f_str))],
+                               [sg.Text(str('Type_g: '+type_g+' - '+'Dependant_g: '+ dependant_g_str))],
+                               [sg.Text('Project: '),sg.Input(k='-IN-'),sg.Text(size=(14,1), key='-OUT-')],
+                               [sg.Text('Revision: '),sg.Input(k='-IN-0'),sg.Text(size=(14,1), key='-OUT-0')],
+                               [sg.Button('Save Table in DB')]]
                     layout = layout 
                     window = sg.Window('Final prediction',layout,finalize=True)
                     
                     while True: 
                         event, values = window.read(timeout=25)
-                        if event in (None, 'Exit', 'Cancel'):
+                        if event in (None, 'Cancel'):
                             break
                         window.Element('_IMAGE_').UpdateAnimation(full_path_kid, time_between_frames=50)
                         
+                        if event == sg.WIN_CLOSED :
+                            save_table='No'
+                            break
+                        
+                        if event == 'Save Table in DB' :
+                            save_table='Yes'
+                            break
+                        
+                        window['-OUT-'].update(values['-IN-'])
+                    
+                    window.close()
+                    
+                    if save_table=='Yes':
+                        print('Results saved.')
+                        Project_name=values['-IN-']
+                        Revision_number=values['-IN-0']
+                        
+                        conn=mysql.connector.connect(user='owdb_user',password='ituotdowdb',host='dklycopilod1',database='owdb')
+                        mycursor=conn.cursor()
+                        
+                        
+                        sql=str('INSERT INTO Pisa_Param_Level_1 '+'(Project,Soil_unit,Parameter,Type_f,Dep_f,Type_g,Dep_g,rev,Coe_1_1,Coe_1_2,Coe_1_3,Coe_2_1,Coe_2_2,Coe_2_3,Coe_3_1,Coe_3_2,Coe_3_3) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)')
+                        #val = str(sql + "INSERT INTO customers (name, address) VALUES (%s, %s)")
+                        val = (str(Project_name), str(Unit[0]), str(array_full_str[1]), type_f, dependant_f_str, type_g, dependant_g_str, Revision_number, Level_1_1, Level_1_2, Level_1_3, Level_2_1, Level_2_2, Level_2_3, Level_3_1, Level_3_2, Level_3_3)
+                        
+                        mycursor.execute(sql, val)
+                        
+                        conn.commit()
+                        
+                        print(mycursor.rowcount, "record inserted.")
+                        
+                    else:
+                        print('Results not saved.')
+                        
                     break
+                
+                    
+                    
                 else:
                     print('Not validated - User choice')
             else:
@@ -1501,6 +1822,9 @@ for i in range(len(list_toDo)):
             Level_1=poptM
             #dependant_g=input_data['dependant_g']
             #dependant_f=input_data['dependant_f']
+            
+
+            
             
             check_Dr=[0.22,1]
             check_tan_phi=[0.53,1.07]
