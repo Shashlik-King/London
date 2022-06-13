@@ -99,9 +99,10 @@ conn.close()
 # =============================================================================
 #Choose a position 
 # =============================================================================
-position='WTG-55'
-diameter='9.7'
-length='40.0'
+position='WTG-08'
+diameter='9.0'
+length='33.0'
+write_excel='No' #'Yes' or 'No'
 
 # =============================================================================
 #Extract design profile for the position
@@ -342,19 +343,91 @@ for index_new in range(int(len(new_array)/4)):
 # =============================================================================
 #Create excel
 # =============================================================================
-wb = openpyxl.load_workbook('Back_calculation.xlsx')
-#ws=wb.get_active_sheet()
-ws1=wb.create_sheet()
-ws1.title=position
+if(write_excel=='Yes'):
+    wb = openpyxl.load_workbook('Back_calculation.xlsx')
+    #ws=wb.get_active_sheet()
+    ws1=wb.create_sheet()
+    ws1.title=position
+    
+    
+    max_array_r=len(array_PISA)
+    max_array_c=74
+    
+    for index_row in range(max_array_r):
+        for index_column in range(max_array_c):
+            ws1.cell(row=index_row+1, column=index_column+2).value=array_PISA[index_row][index_column]
+            ws1.cell(row=index_row+1, column=1).value=array_df2[index_row*2+1][4]
+            
+    wb.save('Back_calculation.xlsx')
+    wb.close()
 
+# =============================================================================
+#Write DB
+# =============================================================================
+my_file_kid='Geotec'
+my_path = os.path.dirname(__file__)
+full_path_kid=(my_path+'/'+my_file_kid+'.gif')
 
-max_array_r=len(array_PISA)
-max_array_c=74
+layout = [ [sg.Text('Save the parameters to the database for this position?')],
+           
+           #[sg.Image(full_path)],
+           #[sg.Text('Source for Files', size=(15, 1)), sg.InputText(), sg.FilesBrowse()],
+           [sg.Text(str('WTG number: '+position))],
+           [sg.Text(str('Diameter: '+diameter))],
+           [sg.Text(str('Pile length: '+length))],
+           [sg.Text(str('Exemple of name for DB: GHS_U3'))],
+           [sg.Text('Naming DB: '),sg.Input(k='-IN-'),sg.Text(size=(14,1), key='-OUT-')],
+           [sg.Text('Project: '),sg.Input(k='-IN-0'),sg.Text(size=(14,1), key='-OUT-0')],
+           [sg.Text('Location_DD: '),sg.Input(k='-IN-1'),sg.Text(size=(14,1), key='-OUT-1')],
+           [sg.Text('Revision: '),sg.Input(k='-IN-2'),sg.Text(size=(14,1), key='-OUT-2')],
+           [sg.Text('Preparer: '),sg.Input(k='-IN-3'),sg.Text(size=(14,1), key='-OUT-3')],
+           [sg.Button('Save Table in DB')],
+           [sg.Image(full_path_kid, key='_IMAGE_')]]
 
-for index_row in range(max_array_r):
-    for index_column in range(max_array_c):
-        ws1.cell(row=index_row+1, column=index_column+2).value=array_PISA[index_row][index_column]
-        ws1.cell(row=index_row+1, column=1).value=array_df2[index_row*2+1][4]
+layout = layout 
+window = sg.Window('Final prediction',layout,finalize=True)
+
+while True: 
+    event, values = window.read(timeout=25)
+    if event in (None, 'Cancel'):
+        break
+    window.Element('_IMAGE_').UpdateAnimation(full_path_kid, time_between_frames=50)
+    
+    if event == sg.WIN_CLOSED :
+        save_table='No'
+        break
+    
+    if event == 'Save Table in DB' :
+        save_table='Yes'
+        break
+    
+    window['-OUT-'].update(values['-IN-'])
+
+window.close()
+
+if save_table=='Yes':
+    print('Results saved.')
+    Name_DB=values['-IN-']
+    Project_name=values['-IN-0']
+    Location_name=values['-IN-1']
+    Revision_number=values['-IN-2']
+    Preparer=values['-IN-3']
+    Date=datetime.now().date()
+    
+    conn=mysql.connector.connect(user='owdb_user',password='ituotdowdb',host='dklycopilod1',database='owdb')
+    mycursor=conn.cursor()
+    
+    for index_DB in range(len(array_PISA)):
+        sql=str('INSERT INTO COPCAT_Data_Base '+'(name,project,location,rev,diameter,length,notes,soil_type,y_u_F,y_u_1,y_u_2,y_u_3,P_u_F,P_u_1,P_u_2,P_u_3,k_p_F,k_p_1,k_p_2,k_p_3,n_p_F,n_p_1,n_p_2,n_p_3,tetam_u_F,tetam_u_1,tetam_u_2,tetam_u_3,m_u_F,m_u_1,m_u_2,m_u_3,k_m_F,k_m_1,k_m_2,k_m_3,n_m_F,n_m_1,n_m_2,n_m_3,yB_u_F,yB_u_1,yB_u_2,yB_u_3,HB_u_F,HB_u_1,HB_u_2,HB_u_3,k_H_F,k_H_1,k_H_2,k_H_3,n_H_F,n_H_1,n_H_2,n_H_3,tetaMb_u_F,tetaMb_u_1,tetaMb_u_2,tetaMb_u_3,MB_u_F,MB_u_1,MB_u_2,MB_u_3,k_MB_F,k_MB_1,k_MB_2,k_MB_3,n_MB_F,n_MB_1,n_MB_2,n_MB_3,preparer,timestamp) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)')
+        #val = str(sql + "INSERT INTO customers (name, address) VALUES (%s, %s)")
+        val = (str(str(Name_DB)+'_'+str(index_DB+1)), str(Project_name), str(Location_name), int(Revision_number), float(diameter), str(length), str(array_PISA[index_DB][6]), str(array_PISA[index_DB][7]), array_PISA[index_DB][8], array_PISA[index_DB][9], array_PISA[index_DB][10], array_PISA[index_DB][11], array_PISA[index_DB][12], array_PISA[index_DB][13], array_PISA[index_DB][14], array_PISA[index_DB][15], array_PISA[index_DB][16], array_PISA[index_DB][17], array_PISA[index_DB][18], array_PISA[index_DB][19], array_PISA[index_DB][20], array_PISA[index_DB][21], array_PISA[index_DB][22], array_PISA[index_DB][23], array_PISA[index_DB][24], array_PISA[index_DB][25], array_PISA[index_DB][26], array_PISA[index_DB][27], array_PISA[index_DB][28], array_PISA[index_DB][29], array_PISA[index_DB][30], array_PISA[index_DB][31], array_PISA[index_DB][32], array_PISA[index_DB][33], array_PISA[index_DB][34], array_PISA[index_DB][35], array_PISA[index_DB][36], array_PISA[index_DB][37], array_PISA[index_DB][38], array_PISA[index_DB][39], array_PISA[index_DB][40], array_PISA[index_DB][41], array_PISA[index_DB][42], array_PISA[index_DB][43], array_PISA[index_DB][44], array_PISA[index_DB][45], array_PISA[index_DB][46], array_PISA[index_DB][47], array_PISA[index_DB][48], array_PISA[index_DB][49], array_PISA[index_DB][50], array_PISA[index_DB][51], array_PISA[index_DB][52], array_PISA[index_DB][53], array_PISA[index_DB][54], array_PISA[index_DB][55], array_PISA[index_DB][56], array_PISA[index_DB][57], array_PISA[index_DB][58], array_PISA[index_DB][59], array_PISA[index_DB][60], array_PISA[index_DB][61], array_PISA[index_DB][62], array_PISA[index_DB][63], array_PISA[index_DB][64], array_PISA[index_DB][65], array_PISA[index_DB][66], array_PISA[index_DB][67], array_PISA[index_DB][68], array_PISA[index_DB][69], array_PISA[index_DB][70], array_PISA[index_DB][71], Preparer, Date)
         
-wb.save('Back_calculation.xlsx')
-wb.close()
+        mycursor.execute(sql, val)
+        
+        conn.commit()
+        
+        print(mycursor.rowcount, "record inserted.")
+    
+else:
+    print('Results not saved.')
+    

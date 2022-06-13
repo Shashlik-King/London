@@ -1165,6 +1165,17 @@ for i in range(len(list_toDo)):
             check_z_D=[0,5]
             check_L_D=[3,5]
             
+            #PM3
+            check_Dr=[0.51,1]
+            check_tan_phi=[0.55,0.65]
+            check_CSR=[0.22,1.4]
+            check_CF=[0.5,4.6]
+            check_Su=[14,1200]
+            check_z_L=[0.1,1]
+            check_z_D=[0.8,5]
+            check_L_D=[3,5]
+            
+            
             #list6=['Dr','tan_phi','Su','CSR','CF']
             
             #check_sand=[check_Dr,check_tan_phi,check_CSR,check_CF]
