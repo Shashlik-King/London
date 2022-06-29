@@ -99,10 +99,10 @@ conn.close()
 # =============================================================================
 #Choose a position 
 # =============================================================================
-position='WTG-08'
-diameter='9.0'
-length='33.0'
-write_excel='No' #'Yes' or 'No'
+position='WTG-11'
+diameter='9.5'
+length='40.0'
+write_excel='Yes' #'Yes' or 'No'
 
 # =============================================================================
 #Extract design profile for the position
@@ -155,6 +155,16 @@ array_PISA_non_modified=array_PISA
 # =============================================================================
 new_array=[]
 for index_param in range(0,len(array_df2),2):
+
+
+    array_df2=df2.to_numpy()
+    k=0
+    for index_df2 in range(len(df2)):
+        if df2['id'][index_df2]!=position:
+            array_df2=np.delete(array_df2,k,0)
+        else:
+            k=k+1  
+
     #print('index_param: '+str(index_param))
     for index_df1 in range(len(array_df1)):
         if array_df1[index_df1][1] == array_df2[index_param][4]:
@@ -330,7 +340,19 @@ for index_param in range(0,len(array_df2),2):
                 pu3=float(Level_3_1)+float(Level_3_2)*np.exp(float(Level_3_3)*float(f_dep))
             
             new_array=new_array+[pug,pu1,pu2,pu3]
+            #print(index_param)
             break
+        elif(array_df1[index_df1][1] != array_df2[index_param][4] and index_df1==len(array_df1)-1):
+            pug=array_PISA[int(index_param/2)][12]
+            pu1=array_PISA[int(index_param/2)][13]
+            pu2=array_PISA[int(index_param/2)][14]
+            pu3=array_PISA[int(index_param/2)][15]
+            new_array=new_array+[pug,pu1,pu2,pu3]
+        
+        #print(array_df1[index_df1][1])
+        #print(array_df2[index_param][4])
+        #print(index_df1)
+        #print(len(array_df1)-1)
      
 
 for index_new in range(int(len(new_array)/4)):
@@ -338,6 +360,7 @@ for index_new in range(int(len(new_array)/4)):
     array_PISA[index_new][13]=new_array[index_new*4+1]
     array_PISA[index_new][14]=new_array[index_new*4+2]
     array_PISA[index_new][15]=new_array[index_new*4+3]
+    #print(array_PISA[index_new][12])
 
 
 # =============================================================================

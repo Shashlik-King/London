@@ -175,6 +175,8 @@ list3=['0','1']
 list4=['0','1','2']
 list5=['0','1','2']
 list6=['Dr','tan_phi','Su','CSR','CF']
+list_sand=['Dr','tan_phi']
+list_clay=['Su']
 list7=['ALL','NGI','GHS']
 list8=['ALL','A_FC1.4_OCR1_DR70','A_FC1.4_OCR1_DR83','A_FC1.4_OCR1_DR83_undrained','B_FC15.1_OCR1_DR69_undrained','Batch3_FC14_OCR1_DR77','Batch3_FC14_OCR6_DR80','19b_FC30_OCR6_DR50','20a_FC18_OCR6_DR80','21a_FC11_OCR1.3_DR35','21a_FC17_OCR1.5_DR85','Unit2a_OCR16_Ip16','Unit2c_OCR8_Ip37','C2_OCR6_Ip55','Drammen_Clay_4_PC2','Drammen_Clay_4_PH2','Drammen_Clay_4_PM2','Drammen_Clay_4_CC3']
 
@@ -327,7 +329,7 @@ for i in range(len(list_toDo)):
         if(Unit[0]=='SS1' or Unit[0]=='H2' or Unit[0]=='PC1' or Unit[0]=='PH1' or Unit[0]=='PM1' or Unit[0]=='PM3' or Unit[0]=='PM4' or Unit[0]=='PM5' or Unit[0]=='CC1'):
             print('==================================================================')
             print('Running on parameters of SAND: Dr, tan(phi), CSR, G0, Cf')
-            list_sand=['Dr','tan_phi','CSR','CF']
+            #list_sand=['Dr','tan_phi']
             list_f=[0,1,2]
             list_g=[0,1,2]
             index_sand=0
@@ -501,23 +503,62 @@ for i in range(len(list_toDo)):
                                 fig = plt.figure(figsize=(10, 10))
                                 ax1 = fig.add_subplot(111)
                                       #ax1.grid()
+                                
+                                #####
+                                j_regression=0
+                                name_test=''
+                                array_real_values=[]
+                                for j_regression in range(len(array_regression)):
+                                    if j_regression==0:
+                                        name_test=array_regression[j_regression][3]
+                                        array_real_values=array_real_values+[name_test,j_regression]
+                                    elif j_regression!=0 and array_regression[j_regression][3]!=array_regression[j_regression-1][3]:
+                                        name_test=array_regression[j_regression][3]
+                                        array_real_values=array_real_values+[name_test,j_regression]
+                                
+                                
+                                j_regression=0
+                                array_to_plot_real=[]
+                                for j_regression in range(int(len(array_real_values)/2)):
+                                    array_to_plot_real=[]
+                                    depth_to_plot=[]
+                                    print('j_regression: '+ str(j_regression))
+                                    if j_regression == int(len(array_real_values)/2-1) :
+                                        from_=array_real_values[int(j_regression*2+1)]
+                                        till=len(param_regression)
+                                    else:  
+                                        from_=array_real_values[int(j_regression*2+1)]
+                                        till=array_real_values[int(j_regression*2+3)]
+                                        
+                                    for j2_regression in range(from_,till):
+                                        #print('j2_regression: '+ str(j2_regression))
+                                        depth_to_plot=depth_to_plot+[depth[j2_regression]]
+                                        array_to_plot_real=array_to_plot_real+[param_regression[j2_regression]]
+                                    
+                                    line1=plt.scatter(array_to_plot_real,depth_to_plot)
+                                    line1.set_label("Real values "+array_real_values[int(j_regression*2)])
+                                    
+                                    if j_regression == int(len(array_real_values)/2-1) :
+                                        line6=plt.scatter(predict_param,depth,color='black')
+                                        line6.set_label('Predicted values')
                                       
-                                line1=plt.scatter(param_regression,depth)
-                                line1.set_label("Real values")
+                                    ax1.set_xlabel(param_regression_str)
+                                          # ax1.set_xlim(0,max(Gmax))
+                                    min_depth=0
+                                    max_depth=calc_y*5
+                                    plt.ylim([min_depth,max_depth])
+                                    plt.xlim([0,calc_yM*M_profile*2])
+                                    plt.gca().invert_yaxis()
+                                    ax1.set_ylabel('Depth [m]')
+                                          
+                                    ax1.legend()
+                                    #break
+                                    
+                                #####
+                                #line1=plt.scatter(param_regression,depth)
+                                #line1.set_label("Real values")
                                       
-                                line6=plt.scatter(predict_param,depth,color='black')
-                                line6.set_label('Predicted values')
-                                  
-                                ax1.set_xlabel(param_regression_str)
-                                      # ax1.set_xlim(0,max(Gmax))
-                                min_depth=0
-                                max_depth=calc_y*5
-                                plt.ylim([min_depth,max_depth])
-                                plt.xlim([0,calc_yM*M_profile*2])
-                                plt.gca().invert_yaxis()
-                                ax1.set_ylabel('Depth [m]')
-                                      
-                                ax1.legend()
+                                
                                 
                                 type_f=str(list_f[index_f])
                                 type_g=str(list_g[index_g])
@@ -646,7 +687,7 @@ for i in range(len(list_toDo)):
         else:
             print('==================================================================')
             print('Running on parameters of CLAY: Su, CSR, G0, Cf')
-            list_clay=['Su','CSR','CF']
+            #list_clay=['Su'] #'CSR','CF'
             list_f=[0,1,2]
             list_g=[0,1,2]
             index_clay=0
@@ -823,22 +864,53 @@ for i in range(len(list_toDo)):
                                 ax1 = fig.add_subplot(111)
                                       #ax1.grid()
                                       
-                                line1=plt.scatter(param_regression,depth)
-                                line1.set_label("Real values")
+                                j_regression=0
+                                name_test=''
+                                array_real_values=[]
+                                for j_regression in range(len(array_regression)):
+                                    if j_regression==0:
+                                        name_test=array_regression[j_regression][3]
+                                        array_real_values=array_real_values+[name_test,j_regression]
+                                    elif j_regression!=0 and array_regression[j_regression][3]!=array_regression[j_regression-1][3]:
+                                        name_test=array_regression[j_regression][3]
+                                        array_real_values=array_real_values+[name_test,j_regression]
+                                
+                                
+                                j_regression=0
+                                array_to_plot_real=[]
+                                for j_regression in range(int(len(array_real_values)/2)):
+                                    array_to_plot_real=[]
+                                    depth_to_plot=[]
+                                    print('j_regression: '+ str(j_regression))
+                                    if j_regression == int(len(array_real_values)/2-1) :
+                                        from_=array_real_values[int(j_regression*2+1)]
+                                        till=len(param_regression)
+                                    else:  
+                                        from_=array_real_values[int(j_regression*2+1)]
+                                        till=array_real_values[int(j_regression*2+3)]
+                                        
+                                    for j2_regression in range(from_,till):
+                                        #print('j2_regression: '+ str(j2_regression))
+                                        depth_to_plot=depth_to_plot+[depth[j2_regression]]
+                                        array_to_plot_real=array_to_plot_real+[param_regression[j2_regression]]
+                                    
+                                    line1=plt.scatter(array_to_plot_real,depth_to_plot)
+                                    line1.set_label("Real values "+array_real_values[int(j_regression*2)])
+                                    
+                                    if j_regression == int(len(array_real_values)/2-1) :
+                                        line6=plt.scatter(predict_param,depth,color='black')
+                                        line6.set_label('Predicted values')
                                       
-                                line6=plt.scatter(predict_param,depth,color='black')
-                                line6.set_label('Predicted values')
-                                  
-                                ax1.set_xlabel(param_regression_str)
-                                      # ax1.set_xlim(0,max(Gmax))
-                                min_depth=0
-                                max_depth=calc_y*5
-                                plt.ylim([min_depth,max_depth])
-                                plt.xlim([0,calc_yM*M_profile*2])
-                                plt.gca().invert_yaxis()
-                                ax1.set_ylabel('Depth [m]')
-                                      
-                                ax1.legend()
+                                    ax1.set_xlabel(param_regression_str)
+                                          # ax1.set_xlim(0,max(Gmax))
+                                    min_depth=0
+                                    max_depth=calc_y*5
+                                    plt.ylim([min_depth,max_depth])
+                                    plt.xlim([0,calc_yM*M_profile*2])
+                                    plt.gca().invert_yaxis()
+                                    ax1.set_ylabel('Depth [m]')
+                                          
+                                    ax1.legend()
                                 
                                 type_f=str(list_f[index_f])
                                 type_g=str(list_g[index_g])
@@ -1116,8 +1188,8 @@ for i in range(len(list_toDo)):
             check_L_D=[3,5]
             
             #PM5
-            check_Dr=[0.22,1]
-            check_tan_phi=[0.55,0.94]
+            check_Dr=[0.41,1]
+            check_tan_phi=[0.55,0.67]
             check_CSR=[0.22,1.4]
             check_CF=[0.5,4.6]
             check_Su=[14,1200]
@@ -1165,16 +1237,15 @@ for i in range(len(list_toDo)):
             check_z_D=[0,5]
             check_L_D=[3,5]
             
-            #PM3
-            check_Dr=[0.51,1]
-            check_tan_phi=[0.55,0.65]
+            #ALL
+            check_Dr=[0.22,1]
+            check_tan_phi=[0.53,1.07]
             check_CSR=[0.22,1.4]
             check_CF=[0.5,4.6]
-            check_Su=[14,1200]
-            check_z_L=[0.1,1]
-            check_z_D=[0.8,5]
+            check_Su=[0,1200]
+            check_z_L=[0,1]
+            check_z_D=[0,5]
             check_L_D=[3,5]
-            
             
             #list6=['Dr','tan_phi','Su','CSR','CF']
             
