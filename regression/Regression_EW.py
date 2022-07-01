@@ -300,6 +300,8 @@ else :
 #Transform dataframe of mysql in a simple array
 array_regression_base=df1.to_numpy()
 
+
+
 #Batch run of the regressions for each line fully filled
 for i in range(len(list_toDo)):
     array_regression=array_regression_base
@@ -324,6 +326,56 @@ for i in range(len(list_toDo)):
                 array_regression=np.delete(array_regression,k,0)
         
         Unit=array_regression[0]
+        
+        #Choose location to use
+        j_regression=0
+        name_test=''
+        array_real_values=[]
+        for j_regression in range(len(array_regression)):
+            if j_regression==0:
+                name_test=array_regression[j_regression][3]
+                array_real_values=array_real_values+[name_test,j_regression]
+            elif j_regression!=0 and array_regression[j_regression][3]!=array_regression[j_regression-1][3]:
+                name_test=array_regression[j_regression][3]
+                array_real_values=array_real_values+[name_test]
+                
+        layout = [ [sg.Text('Choose the location to be REMOVED:')],
+                   [sg.Text(str(array_real_values))],
+                   [sg.Text('Example: D1,S3 or "" if ALL selected')],
+                   [sg.Input(k='-IN-')],
+                   #[sg.Text('Source for Files', size=(15, 1)), sg.InputText(), sg.FilesBrowse()],
+                   [sg.Button('Done')]]
+
+        layout = layout 
+        window = sg.Window('Choose the locations',layout,finalize=True)
+
+        #Read GUI values
+        while True: 
+            event, values_2 = window.read()
+            output=''
+
+            if event == sg.WIN_CLOSED or event == 'Done':
+                break
+
+            
+        window.close()
+        
+        if(values_2['-IN-']==""):
+            print('Locations chosen!')
+        else:
+            string_locations=values_2['-IN-'].split(",")
+            for x in range(len(string_locations)):
+                k=0
+                j=0
+                for j in range(len(array_regression)):
+                    print(j)
+                    if array_regression[k][3]==string_locations[x] and k<=len(array_regression):
+                        array_regression=np.delete(array_regression,k,0)
+                    elif k>=len(array_regression):
+                        k=k+1
+                    else:
+                        k=k+1
+        
         
         #Batch run over the Sand parameters and all types of function f and g
         if(Unit[0]=='SS1' or Unit[0]=='H2' or Unit[0]=='PC1' or Unit[0]=='PH1' or Unit[0]=='PM1' or Unit[0]=='PM3' or Unit[0]=='PM4' or Unit[0]=='PM5' or Unit[0]=='CC1'):
@@ -480,7 +532,7 @@ for i in range(len(list_toDo)):
                             #print(range(len(PISA)))
                             #print(type(PISA))
                             try: 
-                                poptM, pcovM = curve_fit(g2,input_data, param_regression)
+                                poptM, pcovM = curve_fit(g2,input_data, param_regression,maxfev=5000)
                                 #print(poptM)
                                 #print(variable_total)
                                 predict_param=g2(input_data,poptM[0],poptM[1],poptM[2],poptM[3],poptM[4],poptM[5],poptM[6],poptM[7],poptM[8]) 
@@ -840,7 +892,7 @@ for i in range(len(list_toDo)):
                             #print(range(len(PISA)))
                             #print(type(PISA))
                             try:
-                                poptM, pcovM = curve_fit(g2,input_data, param_regression)
+                                poptM, pcovM = curve_fit(g2,input_data, param_regression,maxfev=5000)
                                 #print(poptM)
                                 #print(variable_total)
                                 predict_param=g2(input_data,poptM[0],poptM[1],poptM[2],poptM[3],poptM[4],poptM[5],poptM[6],poptM[7],poptM[8]) 
@@ -1753,7 +1805,7 @@ for i in range(len(list_toDo)):
         #print(range(len(PISA)))
         #print(type(PISA))
         try:
-            poptM, pcovM = curve_fit(g2,input_data, param_regression)
+            poptM, pcovM = curve_fit(g2,input_data, param_regression,maxfev=5000)
             print(poptM)
             #print(variable_total)
             predict_param=g2(input_data,poptM[0],poptM[1],poptM[2],poptM[3],poptM[4],poptM[5],poptM[6],poptM[7],poptM[8]) 
