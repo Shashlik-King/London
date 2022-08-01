@@ -6,7 +6,4 @@ element.PISA_param(:,3)  = element.PISA_param(:,3)  .* multiplier(1:size(element
 element.PISA_param(:,8)  = element.PISA_param(:,8)  .* multiplier(1:size(element.PISA_param(:,1),1),2);
 element.PISA_param(:,9)  = element.PISA_param(:,9)  .* multiplier(1:size(element.PISA_param(:,1),1),1);
 element.PISA_param(:,10) = element.PISA_param(:,10) .* multiplier(1:size(element.PISA_param(:,1),1),1);
-
-%% Base spring are missing, they can also be added for the reduction.
-
 end

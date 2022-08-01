@@ -6,5 +6,4 @@ csr             = CSR_N_axis(:,2);
 [~,N_index]     = min(abs(n-N));
 [~,CSR_index]   = min(abs(csr-CSR));
 gamma           = gamma_matrix(CSR_index , N_index);
-
 end

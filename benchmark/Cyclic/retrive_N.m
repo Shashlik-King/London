@@ -15,19 +15,11 @@ if max(g) >= gamma && min(g) <= gamma   %If "gamma" given as input is lower or b
     N                = n(gamma_index);
     
 else
-    N                = 1;
+%     N                = 1;
     if g(end) < gamma
         disp('gamma is too big');
-%         [~,gamma_index]  = min(abs(g-max(g)));    
-%         N                = n(gamma_index);       
-        
     elseif g(1) > gamma 
         disp('gamma too small');
-%         [~,gamma_index]  = min(abs(g-min(g)));    
-%         N                = n(gamma_index);  
     end
 end
-
-
-
 end
