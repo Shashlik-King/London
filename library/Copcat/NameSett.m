@@ -10,7 +10,7 @@ Input.Function_Type      = Sett.Function_Type;
 Input.Constant_name      = Sett.Constant_name(1,2:end);
 Input.Constant_value     = Sett.Constant_value(:,2:end);
 
-if strcmp(Input.Stratigraphy{1,2}, 'homogeneous')    % When the soil is homogious, but various layeres has been defined in cospin input 
+if strcmp(Input.Stratigraphy{1,2}, 'Homogeneous')    % When the soil is homogious, but various layeres has been defined in cospin input 
     Input.Starting_Value = Sett.Starting_Value(1,:); 
     Input.LB             = Sett.LB(1,:);
     Input.UB             = Sett.UB(1,:);

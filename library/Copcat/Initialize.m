@@ -101,7 +101,7 @@ Input.Function_Type_Name = Input.Function_Type_Name;
 Input.Function_Type      = Input.Function_Type;
 Input.Constant_name      = Input.Constant_name(1,on_layers_cols_con);
 
-if strcmp(Input.Stratigraphy{1,2}, 'homogeneous')    % When the soil is homogious, but various layeres has been defined in cospin input 
+if strcmp(Input.Stratigraphy{1,2}, 'Homogeneous')    % When the soil is homogious, but various layeres has been defined in cospin input 
     Input.Starting_Value = Input.Starting_Value(1,:); 
     Input.LB             = Input.LB(1,:);
     Input.UB             = Input.UB(1,:);
